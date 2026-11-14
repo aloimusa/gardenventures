@@ -259,12 +259,12 @@ export function createOrchidRig(opts: { age?: number; seed?: number } = {}): Pla
 
     // the can: rests above and to the right with a small bob; while pouring it moves so its rose sits over the
     // plant, and tips. The rose is steered to `aim` by feedback, so the stream always lands on the plant.
-    pourT = damp(pourT, pouring ? 1 : 0, pouring ? 5 : 3.2, dt);
-    tilt = damp(tilt, pouring ? 0.78 : -0.1, pouring ? 5 : 3.5, dt);
+    pourT = damp(pourT, pouring ? 1 : 0, pouring ? 9 : 3.2, dt);
+    tilt = damp(tilt, pouring ? 0.78 : -0.1, pouring ? 9 : 3.5, dt);
     canBody.rotation.z = tilt + 0.03 * Math.sin(t * 0.8) * calm * (1 - pourT);
     can.updateMatrixWorld(true);
     roseFace.getWorldPosition(roseW); group.worldToLocal(roseW);
-    if (pouring) pourPos.addScaledVector(tmp.subVectors(aim, roseW), Math.min(1, dt * 6));
+    if (pouring) pourPos.addScaledVector(tmp.subVectors(aim, roseW), Math.min(1, dt * 10));
     else pourPos.lerp(REST, Math.min(1, dt * 3));
     can.position.lerpVectors(REST, pourPos, pourT);
     can.position.y += 0.05 * Math.sin(t * 1.1 + 1) * calm * (1 - pourT);
@@ -281,7 +281,7 @@ export function createOrchidRig(opts: { age?: number; seed?: number } = {}): Pla
         if (!d) break;
         d.alive = true;
         d.p.copy(roseW).add(tmp.set((Math.random() - 0.5) * 0.045, (Math.random() - 0.5) * 0.03, (Math.random() - 0.5) * 0.045));
-        d.v.copy(dirW).multiplyScalar(0.55 + Math.random() * 0.12).add(tmp.set((Math.random() - 0.5) * 0.08, 0, (Math.random() - 0.5) * 0.08));
+        d.v.copy(dirW).multiplyScalar(0.8 + Math.random() * 0.15).add(tmp.set((Math.random() - 0.5) * 0.08, -0.7, (Math.random() - 0.5) * 0.08));
         d.s = 0.75 + Math.random() * 0.5;
       }
     } else spawn = 0;
@@ -290,7 +290,7 @@ export function createOrchidRig(opts: { age?: number; seed?: number } = {}): Pla
     for (let i = 0; i < N; i++) {                   // only live drops are drawn: they are packed at the front
       const d = dp[i];
       if (!d.alive) continue;
-      d.v.y -= 6.5 * dt;
+      d.v.y -= 12 * dt;
       d.p.addScaledVector(d.v, dt);
       if (d.p.y < floor) { d.alive = false; landed++; continue; }
       q.setFromUnitVectors(up, tmp.copy(d.v).normalize());

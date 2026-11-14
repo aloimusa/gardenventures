@@ -2,9 +2,11 @@ import * as THREE from 'three';
 import { log, save, state, localDate, wateredToday } from '../state';
 import type { PlantRig } from './rig';
 import { createPlaceholderRig } from './placeholder';
+import { createGardenRig } from './gardenRig';
+void createPlaceholderRig;
 
 // THE one line that picks the rig (the scene fork swaps it).
-const createRig: () => PlantRig = createPlaceholderRig;
+const createRig: () => PlantRig = createGardenRig;
 
 const HOLD_MS = 600;        // a hold this long waters
 const WANDER_PX = 56;       // a hold may wander this far from where it started...
@@ -38,6 +40,7 @@ export function mountHome(pane: HTMLElement, opts: { onChange(): void }): HomeHa
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'low-power' });
   renderer.setClearColor(0x000000, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.NeutralToneMapping;   // the garden rig's lights are tuned for this (scene fork)
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
   stage.appendChild(renderer.domElement);
   const scene = new THREE.Scene();

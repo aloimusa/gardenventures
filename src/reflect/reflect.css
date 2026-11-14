@@ -1,7 +1,7 @@
 /* Reflect pane. Card 350 x 233 (3:2), radius 24; type scaled by length; the face sits in the bottom-right corner and
    the text wraps around it (two floats), so nothing ever runs under it. */
 .pane[data-pane="reflect"] { display: flex; flex-direction: column; --cw: min(350px, calc(100% - 40px)); --kb: 0px; }
-.pane[data-pane="reflect"] .head { flex: none; padding-bottom: 0; }
+.pane[data-pane="reflect"] .head { flex: none; padding-bottom: 6px; }
 
 .rf-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
   display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 20px 0 18px; touch-action: pan-y;

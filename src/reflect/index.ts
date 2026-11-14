@@ -101,6 +101,7 @@ export function mountReflect(pane: HTMLElement, opts: { onChange(): void; naviga
   });
 
   // ---------------------------------------------------------------- the stack
+  let visible = false;
   const sides = new Map<string, Side>();
   const els = new Map<string, HTMLElement>();
 
@@ -148,7 +149,9 @@ export function mountReflect(pane: HTMLElement, opts: { onChange(): void; naviga
     card.querySelector('.rf-turn')!.setAttribute('aria-label', `${what}. Mood: ${moodName(c.mood)}${c.photo ? '. Has a photo' : ''}. ${showing}. Turn the card`);
     card.querySelector('.rf-editkey')!.setAttribute('aria-label', `Rewrite this card: ${what}`);
     const flag = item.querySelector<HTMLElement>('.rf-flag')!;
-    flag.hidden = !(c.flagged && side !== 'front');
+    const open = c.flagged && side !== 'front';
+    if (open && flag.hidden && visible) requestAnimationFrame(() => flag.scrollIntoView({ block: 'nearest', behavior: reduced.matches ? 'auto' : 'smooth' }));
+    flag.hidden = !open;
   }
 
   function render(): void {
@@ -377,7 +380,6 @@ export function mountReflect(pane: HTMLElement, opts: { onChange(): void; naviga
   list.scrollTop = list.scrollHeight;                    // opens on the newest card
   for (const c of cards()) if (c.reply === null && !c.seed) { sides.set(c.id, c.photo ? 'reply' : 'back'); paintCard(c); ask(c); }
 
-  let visible = false;
   return {
     setVisible(v) {
       if (v === visible) return;

@@ -2,7 +2,7 @@
 // and lift when watered, a soft-glowing bulb at the top, three motes drifting around it.
 // API: { group, update(dt, t), water(amount), setWatered(), get hydration, top (Vector3, where drops land) }
 import * as THREE from 'three';
-import { palette, matte, glow, seeded, lerp, clamp, damp, shadowed } from './style.js';
+import { palette, matte, glow, seeded, lerp, clamp, damp, shadowed } from './style.js?v=e7aa2335';
 
 const LEAVES = 7;
 const GOLDEN = Math.PI * (3 - Math.sqrt(5));

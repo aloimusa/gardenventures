@@ -2,7 +2,7 @@
 // Drops are a small pool of spheres with gravity; each one that falls past `splashY` calls onSplash.
 // API: { group, update(dt, t, { pouring, aim: Vector3, splashY, onSplash }) }
 import * as THREE from 'three';
-import { palette, matte, lerp, damp } from './style.js';
+import { palette, matte, lerp, damp } from './style.js?v=e7aa2335';
 
 const DROPS = 48;
 

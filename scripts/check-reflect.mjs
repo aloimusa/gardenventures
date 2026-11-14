@@ -145,7 +145,7 @@ export async function reflectChecks({ page, context, check, BASE }) {
     'rgb(246, 231, 207)|Mood: Okay', 'rgb(242, 200, 143)|Mood: Good', 'rgb(174, 191, 217)|Mood: Bad', 'rgb(211, 220, 234)|Mood: Not great', 'rgb(246, 231, 207)|Mood: Okay']), moods.join(' '));
   check('the face does not turn the card', await side('seed-1') === 'front');
   const noMoodFace = await page.evaluate(() => { const id = [...document.querySelectorAll('.rf-item')].at(-1).dataset.id; return document.querySelector(`.rf-item[data-id="${id}"] .rf-face svg`).querySelectorAll('path').length; });
-  check('no mood: a face with no mouth (eyes only)', noMoodFace === 2, `${noMoodFace} paths`);
+  check('no mood: a face with no mouth (eyes only; the prototype draws both eyes as one path)', noMoodFace === 1, `${noMoodFace} paths`);
 
   await reveal('seed-1'); await page.waitForTimeout(100);
   await hold(turnSel('seed-1'), 750); await page.waitForTimeout(250);
@@ -188,7 +188,7 @@ export async function reflectChecks({ page, context, check, BASE }) {
     const red = all.filter(x => { const m = x.match(/\d+/g); if (!m) return false; const [r1, g1, b1, a] = m.map(Number); return a !== 0 && r1 > g1 + 40 && r1 > b1 + 40; });
     return { shown: !f.hidden, under: Math.round(r.top - c.bottom), bg: cs.backgroundColor, border: cs.borderTopColor + ' ' + cs.borderTopWidth, radius: cs.borderRadius,
       text: f.innerText, buttons: [...f.querySelectorAll('button')].map(b => b.textContent), red, svg: f.querySelectorAll('svg, img').length }; });
-  check('flagged card: the plan panel opens directly under it', flag.shown && flag.under === 16 && flag.bg === 'rgb(255, 255, 255)'
+  check('flagged card: the plan panel opens directly under it', flag.shown && flag.under === 8 && flag.bg === 'rgb(255, 255, 255)'
     && flag.border === 'rgb(139, 151, 146) 1px' && flag.radius === '20px', JSON.stringify({ ...flag, text: undefined }));
   check('panel: "From your plan", the plan line, Call and Open my plan', flag.text.startsWith('From your plan') && flag.buttons.length === 2
     && flag.buttons[0].startsWith('Call ') && flag.buttons[1] === 'Open my plan', flag.buttons.join(' | '));

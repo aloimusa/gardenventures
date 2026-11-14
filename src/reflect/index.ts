@@ -12,7 +12,7 @@ const MAX_BREAKS = 4;              // at most five lines by hand; the fit check 
 const HOLD_MS = 500, SLOP_PX = 10;
 const PENDING = 'Reading what you wrote…';
 const PLACEHOLDERS = ['What is on your mind?', 'One thing from today?'];
-const DRAFT_KEY = 'garden.reflect.draft', PH_KEY = 'garden.reflect.ph';
+const DRAFT_KEY = 'garden.reflect.draft';
 
 type Side = 'front' | 'back' | 'photo' | 'reply';
 const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
@@ -77,7 +77,7 @@ export function mountReflect(pane: HTMLElement, opts: { onChange(): void; naviga
   function paintWriter(): void {
     ta.value = draft.text;
     ta.className = `rf-text ${writerSize(draft.text.length)}`;
-    ta.placeholder = PLACEHOLDERS[Number(localStorage.getItem(PH_KEY) || 0) % 2];
+    ta.placeholder = PLACEHOLDERS[cards().length % 2];   // the prototype's rule: switches with every card added
     ta.readOnly = pending > 0;
     camBtn.classList.toggle('on', !!draft.photo);
     camBtn.setAttribute('aria-label', draft.photo ? 'Photo added. Take another photo' : 'Add a photo');
@@ -298,7 +298,6 @@ export function mountReflect(pane: HTMLElement, opts: { onChange(): void; naviga
     if (draft.photo) log('card_photo_attached', { id, photo: draft.photo });
     sides.set(id, draft.photo ? 'reply' : 'back');
     draft = { text: '', photo: null }; saveDraft(); lastGood = '';
-    localStorage.setItem(PH_KEY, String((Number(localStorage.getItem(PH_KEY) || 0) + 1) % 2));
     render();
     list.scrollTo({ top: list.scrollHeight, behavior: reduced.matches ? 'auto' : 'smooth' });
     ask(find(id));

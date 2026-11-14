@@ -4,10 +4,11 @@ import type { PlantRig } from './rig';
 import { createPlaceholderRig } from './placeholder';
 import { createGardenRig } from './gardenRig';
 import { createLabRig } from './lab/labRig';
-void createPlaceholderRig; void createLabRig;   // the alternatives: placeholder, and the model agent's lab plant
+import { createOrchidRig } from './orchidRig';
+void createPlaceholderRig; void createLabRig; void createGardenRig;   // alternatives: placeholder, the lab's first plant, our sprout
 
 // THE one line that picks the rig (the scene fork swaps it).
-const createRig: () => PlantRig = createGardenRig;
+const createRig: () => PlantRig = () => createOrchidRig();
 
 const HOLD_MS = 600;        // a hold this long waters
 const WANDER_PX = 56;       // a hold may wander this far from where it started...

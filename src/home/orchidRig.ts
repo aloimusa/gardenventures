@@ -15,7 +15,7 @@ export const DEMO_START_DAYS = 21;
 export const AGE_CAP = 47;
 const BEST_MOOD = 4;            // the orchid's mood runs 1..4; pinned so leaves never lower and blooms stay open
 const S = 1.85;                 // orchid scale in the pot
-const SEED = 1;                 // the orchid's seed: shape jitter and bloom colour family
+const SEED = 0;                 // the orchid's seed: shape jitter and bloom colour family
 
 /** Whole local days since the first app_open in the log (0 on the first day). */
 export function daysSinceFirstOpen(now = new Date()): number {
@@ -71,16 +71,17 @@ export function createOrchidRig(opts: { age?: number; seed?: number } = {}): Pla
   soil.position.y = 0.6;
   float.add(pot, potRim, band, soil);
   // orchids sit in bark: a few warm chips instead of pebbles
-  const chipGeo = keep(new THREE.DodecahedronGeometry(0.04, 0));
-  const chipMat = keep(soft(0xb98a62, { roughness: 0.9 }));
+  const chips = new THREE.InstancedMesh(keep(new THREE.DodecahedronGeometry(0.04, 0)), keep(soft(0xb98a62, { roughness: 0.9 })), 9);
   for (let i = 0; i < 9; i++) {
-    const p = new THREE.Mesh(chipGeo, chipMat);
     const a = i * 2.4 + 0.3, r = 0.14 + rnd() * 0.22;
-    p.position.set(Math.cos(a) * r, 0.635, Math.sin(a) * r);
-    p.scale.set(1.2 + rnd() * 0.6, 0.45, 0.8 + rnd() * 0.4);
-    p.rotation.y = rnd() * 3;
-    float.add(p);
+    const o = new THREE.Object3D();
+    o.position.set(Math.cos(a) * r, 0.635, Math.sin(a) * r);
+    o.scale.set(1.2 + rnd() * 0.6, 0.45, 0.8 + rnd() * 0.4);
+    o.rotation.y = rnd() * 3;
+    o.updateMatrix();
+    chips.setMatrixAt(i, o.matrix);
   }
+  float.add(chips);
 
   // ---------- the orchid ----------
   const orchid = createOrchid(opts.seed ?? SEED);
@@ -118,7 +119,7 @@ export function createOrchidRig(opts: { age?: number; seed?: number } = {}): Pla
   const top = new THREE.Vector3(); plantBox.getCenter(top); top.y = plantBox.max.y;
 
   // a soft halo behind the plant: the magic, stronger on a watered day and at the moment of watering
-  const haloTex = keep(radialTexture([[0, 'rgba(255,246,236,0.9)'], [0.3, 'rgba(250,214,236,0.45)'], [0.7, 'rgba(240,200,230,0.12)'], [1, 'rgba(240,200,230,0)']]));
+  const haloTex = keep(radialTexture([[0, 'rgba(255,248,240,0.95)'], [0.3, 'rgba(244,218,246,0.55)'], [0.7, 'rgba(232,206,240,0.16)'], [1, 'rgba(232,206,240,0)']]));
   const halo = new THREE.Sprite(keep(new THREE.SpriteMaterial({ map: haloTex, transparent: true, depthWrite: false, opacity: 0.35 })));
   const haloAt = plantBox.getCenter(new THREE.Vector3());
   halo.position.set(haloAt.x, haloAt.y + 0.1, plantBox.min.z - 0.05);
@@ -174,7 +175,7 @@ export function createOrchidRig(opts: { age?: number; seed?: number } = {}): Pla
   roseFace.position.set(0, 0.045, 0);
   roseG.add(roseFace);
   canBody.add(tub, lip, stripe, handle, spout, roseG);
-  const REST = new THREE.Vector3(Math.max(0.78, plantBox.max.x + 0.35), Math.max(1.75, top.y + 0.2), 0.15);
+  const REST = new THREE.Vector3(Math.max(0.7, plantBox.max.x + 0.05), top.y + 0.15, 0.15);
   can.position.copy(REST);
   can.rotation.y = -0.25;
   group.add(can);
@@ -182,8 +183,8 @@ export function createOrchidRig(opts: { age?: number; seed?: number } = {}): Pla
   const aim = new THREE.Vector3(0.12, top.y + 0.28, 0.3);
 
   // ---------- water: a stream of instanced drops in rig space ----------
-  const N = 420;
-  const dropGeo = keep(new THREE.SphereGeometry(0.016, 8, 5));
+  const N = 640;
+  const dropGeo = keep(new THREE.SphereGeometry(0.0135, 6, 4));
   const dropMat = keep(new THREE.MeshStandardMaterial({
     color: 0x5ea8e6, emissive: new THREE.Color(0x8cc8f2), emissiveIntensity: 0.5, roughness: 0.25, transparent: true, opacity: 0.88,
   }));
@@ -246,8 +247,8 @@ export function createOrchidRig(opts: { age?: number; seed?: number } = {}): Pla
     orchid.update(dt, t * calm, { perk: 0.35 * glow + 1.2 * lift, mood: BEST_MOOD });
     const g = S * (1 + 0.03 * lift); plant.scale.set(MIRROR * g, g, g);
     halo.position.y = haloAt.y + 0.1 + h;
-    (halo.material as THREE.SpriteMaterial).opacity = 0.32 + 0.22 * glow + 0.35 * lift + 0.05 * Math.sin(t * 1.3);
-    plantLight.intensity = 0.25 * glow + 1.4 * lift;
+    (halo.material as THREE.SpriteMaterial).opacity = 0.5 + 0.25 * glow + 0.35 * lift + 0.05 * Math.sin(t * 1.3);
+    plantLight.intensity = 0.15 * glow + 0.45 * lift;
     for (const M of motes) {
       const on = !M.extra || glow > 0.5 || lift > 0;
       M.s.visible = on;
@@ -271,7 +272,7 @@ export function createOrchidRig(opts: { age?: number; seed?: number } = {}): Pla
     // the stream: drops leave the rose along its axis and fall in an arc onto the plant
     const flow = Math.max(0, Math.min(1, (tilt - 0.3) / 0.3));
     if (pouring && flow > 0) {
-      spawn += dt * 320 * flow;
+      spawn += dt * 500 * flow;
       roseFace.getWorldPosition(roseW); group.worldToLocal(roseW);
       dirW.set(0, 1, 0).applyQuaternion(roseFace.getWorldQuaternion(q)).normalize();
       while (spawn >= 1) {
@@ -279,26 +280,25 @@ export function createOrchidRig(opts: { age?: number; seed?: number } = {}): Pla
         const d = dp.find(x => !x.alive);
         if (!d) break;
         d.alive = true;
-        d.p.copy(roseW).add(tmp.set((Math.random() - 0.5) * 0.06, (Math.random() - 0.5) * 0.03, (Math.random() - 0.5) * 0.06));
+        d.p.copy(roseW).add(tmp.set((Math.random() - 0.5) * 0.045, (Math.random() - 0.5) * 0.03, (Math.random() - 0.5) * 0.045));
         d.v.copy(dirW).multiplyScalar(0.55 + Math.random() * 0.12).add(tmp.set((Math.random() - 0.5) * 0.08, 0, (Math.random() - 0.5) * 0.08));
         d.s = 0.75 + Math.random() * 0.5;
       }
     } else spawn = 0;
     const floor = 0.66 + h;
-    let landed = 0;
-    for (let i = 0; i < N; i++) {
+    let landed = 0, live = 0;
+    for (let i = 0; i < N; i++) {                   // only live drops are drawn: they are packed at the front
       const d = dp[i];
-      if (d.alive) {
-        d.v.y -= 6.5 * dt;
-        d.p.addScaledVector(d.v, dt);
-        if (d.p.y < floor) { d.alive = false; landed++; }
-      }
-      if (!d.alive) { m4.makeScale(0, 0, 0); drops.setMatrixAt(i, m4); continue; }
+      if (!d.alive) continue;
+      d.v.y -= 6.5 * dt;
+      d.p.addScaledVector(d.v, dt);
+      if (d.p.y < floor) { d.alive = false; landed++; continue; }
       q.setFromUnitVectors(up, tmp.copy(d.v).normalize());
       const stretch = 1 + Math.min(2.6, d.v.length() * 0.9);
       m4.compose(d.p, q, sc.set(d.s, d.s * stretch, d.s));
-      drops.setMatrixAt(i, m4);
+      drops.setMatrixAt(live++, m4);
     }
+    drops.count = live;
     drops.instanceMatrix.needsUpdate = true;
     ringAcc += landed;
     while (ringAcc >= 12) {

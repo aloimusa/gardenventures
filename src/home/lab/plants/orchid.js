@@ -51,8 +51,8 @@ export function create(seed = 1) {
   function rebuild(age, mood) {
     plantRoot.clear(); swayers = []; points = [];
     for (const g of disposables) g.dispose(); disposables = [];
-    // garden: leaf greens lifted for the light page (were 0x2f8a4e / 0x6fc66f)
-    const leafMat = matte(leafColor(0x46a06a, mood), { side: THREE.DoubleSide, roughness: 0.42, emissive: 0x0b2a14, emissiveIntensity: 0.35 });
+    // garden: leaf greens lifted and softened for the light page (were 0x2f8a4e / 0x6fc66f, emissive 0.35)
+    const leafMat = matte(leafColor(0x4f9e74, mood), { side: THREE.DoubleSide, roughness: 0.42, emissive: 0x0b2a14, emissiveIntensity: 0.2 });
     const leafMatOld = matte(leafColor(0x2f8a4e, mood, 0.75), { side: THREE.DoubleSide, roughness: 0.6 });
     const leafMatYoung = matte(leafColor(0x86d48e, mood), { side: THREE.DoubleSide, roughness: 0.45, emissive: 0x1c4a1c, emissiveIntensity: 0.35 });
     const m = maturity(age);
@@ -152,9 +152,9 @@ export function create(seed = 1) {
         else {
           // each bloom a touch different in hue, all faintly luminous
           const c = new THREE.Color(fam.petal).offsetHSL((b - n / 2) * 0.008, 0, 0);
-          holder.add(orchid({ color: c.getHex(), lip: fam.lip, glow: fam.glow, size: 1.1 * (1 - fade * 0.55), open: openG * lerp(0.9, 1, (mood - 1) / 3) }));
+          holder.add(orchid({ color: c.getHex(), lip: fam.lip, glow: fam.glow, size: 1.4 * (1 - fade * 0.55), open: openG * lerp(0.9, 1, (mood - 1) / 3) }));
         }
-        plantRoot.add(holder);
+        plantRoot.add(holder);   // garden: blooms 1.4 (was 1.1) so they read on a phone
       }
     }
     built = { age, mood };

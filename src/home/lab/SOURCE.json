@@ -1,0 +1,18 @@
+{
+  "syncedAt": "2026-11-14T17:11:11.398Z",
+  "source": "/srv/http/garden/js",
+  "files": {
+    "style.js": {
+      "mtime": "2026-11-14T16:34:52.227Z",
+      "sha256": "af6022f57842f3bc4181821b38fd580ca6f76a26577b02d2b91df5e50d852608"
+    },
+    "plant.js": {
+      "mtime": "2026-11-14T16:19:01.571Z",
+      "sha256": "355a3991a818b132b3a091c3a2060d1576e74b8a2a88d972b34c66c92bbd9df3"
+    },
+    "can.js": {
+      "mtime": "2026-11-14T16:42:27.988Z",
+      "sha256": "4a8d2a6bbac4d4ec608408e08c80c24a8fd754cb8c07104201cfee7dc974c8f5"
+    }
+  }
+}

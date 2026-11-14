@@ -3,7 +3,8 @@ import { log, save, state, localDate, wateredToday } from '../state';
 import type { PlantRig } from './rig';
 import { createPlaceholderRig } from './placeholder';
 import { createGardenRig } from './gardenRig';
-void createPlaceholderRig;
+import { createLabRig } from './lab/labRig';
+void createPlaceholderRig; void createLabRig;   // the alternatives: placeholder, and the model agent's lab plant
 
 // THE one line that picks the rig (the scene fork swaps it).
 const createRig: () => PlantRig = createGardenRig;

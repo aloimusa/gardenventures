@@ -231,13 +231,13 @@ export function createGardenRig(): PlantRig {
   const shell = new THREE.Mesh(keep(new THREE.SphereGeometry(0.135, 32, 20)), shellMat);
   shell.scale.y = 1.12;
   budGroup.add(shell);
-  for (let k = 0; k < 3; k++) {
+  for (let k = 0; k < 2; k++) {                 // two sepals cupping the pearl from behind, opening sideways
     const cup = new THREE.Group();
-    cup.position.y = -0.13;
-    const m = new THREE.Mesh(keep(leafGeometry(0.15, 0.075, 0.45, 0.3, 300 + k)), leafMat);
+    cup.position.set(0, -0.12, -0.02);
+    const m = new THREE.Mesh(keep(leafGeometry(0.17, 0.1, 0.55, 0.35, 300 + k)), leafMat);
     cup.add(m);
     cup.rotation.order = 'YXZ';
-    cup.rotation.set(-0.32, k * 2.09 + 1.2, 0);
+    cup.rotation.set(-0.55, (k ? 1 : -1) * 2.0 + Math.PI, 0);
     budGroup.add(cup);
   }
   const haloTex = keep(radialTexture([[0, 'rgba(255,248,232,1)'], [0.22, 'rgba(255,214,150,0.55)'], [0.6, 'rgba(255,200,130,0.15)'], [1, 'rgba(255,200,130,0)']]));

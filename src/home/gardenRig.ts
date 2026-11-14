@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import type { PlantRig } from './rig';
 
-const C = {
+export const C = {
   stemDeep: 0x2f6e4a, stemTip: 0x5fae6e,
   leafBase: 0x3a8a5a, leafMid: 0x55b071, leafTip: 0x9fdcb8, leafEdge: 0xc6edc9, vein: 0xd8f2c8,
   pot: 0xd38a6f, potShade: 0xb86a52, potRim: 0xf2e6d4, band: 0xe8b49c,
@@ -16,10 +16,10 @@ const C = {
   sky: 0xeaf6f1, ground: 0xf0e3c8, key: 0xfff0dc, rim: 0xd8ecff,
 };
 
-const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-const damp = (a: number, b: number, k: number, dt: number) => a + (b - a) * (1 - Math.exp(-k * dt));
-const ease = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
-function mulberry(seed: number) {
+export const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+export const damp = (a: number, b: number, k: number, dt: number) => a + (b - a) * (1 - Math.exp(-k * dt));
+export const ease = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+export function mulberry(seed: number) {
   let a = seed >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -30,11 +30,11 @@ function mulberry(seed: number) {
   };
 }
 
-function soft(color: number, o: Partial<THREE.MeshStandardMaterialParameters> = {}) {
+export function soft(color: number, o: Partial<THREE.MeshStandardMaterialParameters> = {}) {
   return new THREE.MeshStandardMaterial({ color, roughness: 0.85, metalness: 0, ...o });
 }
 
-function radialTexture(stops: [number, string][], size = 128) {
+export function radialTexture(stops: [number, string][], size = 128) {
   const c = document.createElement('canvas');
   c.width = c.height = size;
   const g = c.getContext('2d')!;
@@ -48,7 +48,7 @@ function radialTexture(stops: [number, string][], size = 128) {
 }
 
 /** A tube along a curve whose radius follows r(u). */
-function taperedTube(curve: THREE.Curve<THREE.Vector3>, seg: number, radial: number, r: (u: number) => number,
+export function taperedTube(curve: THREE.Curve<THREE.Vector3>, seg: number, radial: number, r: (u: number) => number,
   colorAt?: (u: number) => THREE.Color) {
   const frames = curve.computeFrenetFrames(seg, false);
   const pos: number[] = [], col: number[] = [], idx: number[] = [];

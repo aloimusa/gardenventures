@@ -1,0 +1,111 @@
+/* Reflect pane. Card 350 x 233 (3:2), radius 24; type scaled by length; the face sits in the bottom-right corner and
+   the text wraps around it (two floats), so nothing ever runs under it. */
+.pane[data-pane="reflect"] { display: flex; flex-direction: column; --cw: min(350px, calc(100% - 40px)); --kb: 0px; }
+.pane[data-pane="reflect"] .head { flex: none; padding-bottom: 0; }
+
+.rf-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 20px 0 18px; touch-action: pan-y;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 22px); mask-image: linear-gradient(180deg, transparent 0, #000 22px); }
+.rf-list::before { content: ''; margin-top: auto; }          /* few cards: they sit at the bottom, newest last */
+.rf-item { flex: none; width: var(--cw); display: flex; flex-direction: column; gap: 16px; }
+
+/* ---- card */
+.rf-card { position: relative; width: 100%; aspect-ratio: 3 / 2; perspective: 1400px; --card: #e6e9e6;
+  -webkit-touch-callout: none; }
+.rf-flip { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 500ms cubic-bezier(.3, .7, .25, 1); }
+.rf-card:not([data-side="front"]) .rf-flip { transform: rotateY(180deg); }
+.rf-front, .rf-back { position: absolute; inset: 0; border-radius: 24px; overflow: hidden;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  box-shadow: 0 1px 2px rgba(28, 36, 34, 0.06), 0 10px 26px -12px rgba(28, 36, 34, 0.22); }
+.rf-front { background: var(--card); transition: background 240ms ease; }
+.rf-back { transform: rotateY(180deg); background: #ffffff; border: 1px solid #cfd6d2; }
+
+.rf-tbox { position: absolute; top: 24px; left: 24px; right: 24px; bottom: 16px; }
+.rf-sp { float: right; width: 0; height: calc(100% - 46px); }
+.rf-nt { float: right; clear: right; width: 40px; height: 46px; }
+.rf-txt { color: #1c2422; white-space: pre-wrap; overflow-wrap: anywhere; outline: none; }
+.s28 .rf-txt { font-size: 28px; line-height: 36px; letter-spacing: -0.01em; }
+.s22 .rf-txt { font-size: 22px; line-height: 30px; }
+.s18 .rf-txt { font-size: 18px; line-height: 26px; }
+
+.rf-reply { position: absolute; left: 24px; right: 24px; top: 24px; margin: 0; font-size: 22px; line-height: 30px; color: #1c2422; }
+.rf-card.pending .rf-reply { color: #4f5b57; }
+.rf-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: filter 300ms ease; }
+.rf-veil { position: absolute; inset: 0; background: rgba(255, 255, 255, 0.76); opacity: 0; transition: opacity 300ms ease; }
+.rf-back:has(.rf-img) { border-color: transparent; }
+.rf-back:has(.rf-img) .rf-reply { opacity: 0; transition: opacity 300ms ease; }
+.rf-card[data-side="reply"] .rf-img { filter: blur(14px); transform: scale(1.08); }
+.rf-card[data-side="reply"] .rf-veil, .rf-card[data-side="reply"] .rf-reply { opacity: 1; }
+
+/* the whole card is a button that turns it; the face and Done sit above it */
+.rf-turn { position: absolute; inset: 0; z-index: 1; border-radius: 24px; touch-action: pan-y; }
+.rf-btn, .rf-face, .rf-cam { width: 44px; height: 44px; border-radius: 14px; border: 1.5px solid #3d4744;
+  display: grid; place-items: center; color: #1c2422; }
+.rf-face { position: absolute; right: 14px; bottom: 14px; z-index: 2; transition: opacity 160ms ease; }
+.rf-card:not([data-side="front"]) .rf-face { opacity: 0; pointer-events: none; visibility: hidden; transition: opacity 160ms ease, visibility 0s 160ms; }
+.rf-editkey { position: absolute; left: 14px; bottom: 14px; z-index: 2; min-height: 44px; padding: 0 16px; border-radius: 14px;
+  background: #1c2422; color: #fff; font-weight: 600; opacity: 0; pointer-events: none; }
+.rf-editkey:focus-visible { opacity: 1; pointer-events: auto; }
+.rf-done { position: absolute; left: 14px; bottom: 14px; z-index: 3; min-height: 44px; padding: 0 20px; border-radius: 14px;
+  background: #1c2422; color: #fff; font-weight: 600; }
+.rf-card.editing .rf-turn { pointer-events: none; }
+.rf-card.editing .rf-front { box-shadow: 0 0 0 2px #1c2422, 0 10px 26px -12px rgba(28, 36, 34, 0.22); }
+.rf-card.editing .rf-txt { -webkit-user-select: text; user-select: text; cursor: text; }
+.rf-lsp { float: left; width: 0; height: calc(100% - 46px); }
+.rf-ln { float: left; clear: left; width: 0; height: 46px; }
+.rf-card.editing .rf-ln { width: 74px; }                     /* room for Done, bottom-left, while editing */
+.rf-card.shake { animation: rf-shake 320ms ease-in-out; }
+@keyframes rf-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-7px); } 45% { transform: translateX(6px); }
+  70% { transform: translateX(-4px); } 88% { transform: translateX(2px); } }
+
+/* ---- flagged: the plan, right under the card. Calm on purpose: no red, no warning icon */
+.rf-flag { background: #ffffff; border: 1px solid #8b9792; border-radius: 20px; padding: 18px 20px 20px; }
+.rf-flag p { margin: 0; }
+.rf-flag-h { font-size: 14px; font-weight: 600; color: #4f5b57; }
+.rf-flag-line { margin-top: 6px !important; font-size: 16px; line-height: 24px; color: #1c2422; }
+.rf-flag-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.rf-call, .rf-plan { min-height: 44px; padding: 0 18px; border-radius: 14px; font-weight: 600; }
+.rf-call { background: #1c2422; color: #ffffff; }
+.rf-plan { border: 1.5px solid #3d4744; color: #1c2422; }
+
+/* ---- the writing area: not a card, no box; it sits on the pane's ground */
+.rf-writer { flex: none; width: var(--cw); margin: 0 auto; padding: 0 0 14px; transform: translateY(calc(-1 * var(--kb)));
+  transition: transform 180ms ease; }
+.rf-rule { height: 4px; border-radius: 2px; background: #cfd6d2; }
+.rf-text { display: block; width: 100%; height: 96px; margin: 10px 0 8px; padding: 0; border: 0; outline: none; resize: none;
+  background: transparent; color: #1c2422; font: inherit; -webkit-user-select: text; user-select: text; }
+.rf-text.w22 { font-size: 22px; line-height: 32px; }
+.rf-text.w18 { font-size: 18px; line-height: 24px; }
+.rf-text::placeholder { color: #4f5b57; opacity: 1; }
+.rf-text:focus-visible { outline: none; }
+.rf-writer:focus-within .rf-rule { height: 4px; }
+.rf-row { display: flex; align-items: center; gap: 12px; }
+.rf-cam.on { background: #1c2422; border-color: #1c2422; color: #ffffff; }
+.rf-cam:disabled { opacity: 0.4; cursor: default; }
+.rf-note { flex: 1; font-size: 14px; color: #4f5b57; }
+.rf-add { min-height: 44px; min-width: 88px; padding: 0 22px; border-radius: 14px; background: #1c2422; color: #ffffff; font-weight: 600; }
+.rf-add:disabled { opacity: 0.4; cursor: default; }
+
+/* ---- camera, card-sized, in place of the writing area */
+.rf-writer.cam .rf-rule { visibility: hidden; }
+.rf-camera { position: relative; width: 100%; aspect-ratio: 3 / 2; margin-top: 10px; border-radius: 24px; overflow: hidden; background: #0e1114; }
+.rf-camera[hidden] { display: none; }
+.rf-video, .rf-freeze { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.rf-cancel { position: absolute; top: 8px; left: 10px; z-index: 2; min-height: 44px; padding: 0 12px; color: #ffffff; font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
+.rf-shutter { position: absolute; left: 50%; bottom: 14px; z-index: 2; width: 64px; height: 64px; margin-left: -32px; border-radius: 50%;
+  border: 3px solid #ffffff; display: grid; place-items: center; }
+.rf-shutter span { width: 50px; height: 50px; border-radius: 50%; background: #ffffff; }
+.rf-shutter[hidden] { display: none; }
+.rf-cam-msg { position: absolute; inset: 0; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; color: #ffffff; font-size: 16px; padding: 0 24px; text-align: center; }
+.rf-cam-msg[hidden] { display: none; }
+.rf-pick { min-height: 44px; padding: 0 18px; border-radius: 14px; background: #ffffff; color: #1c2422; font-weight: 600; }
+
+/* ---- an off-screen card used to check that text fits */
+.rf-measure { position: absolute; left: 0; top: 0; width: var(--cw); visibility: hidden; pointer-events: none; z-index: -1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rf-flip, .rf-front, .rf-face, .rf-img, .rf-veil, .rf-reply, .rf-writer { transition: none !important; }
+  .rf-card.shake { animation: none; }
+}

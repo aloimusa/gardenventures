@@ -7,6 +7,9 @@ export interface GardenState {
   v: 1;
   /** local date (YYYY-MM-DD) of the last completed watering, or null */
   wateredOn: string | null;
+  /** the launch check-in's answer, 0 Bad .. 3 Good, or null: a new Reflect card takes it. Stub until the check-in
+   *  exists; set it from the console with garden.setMood(n). */
+  mood: number | null;
 }
 
 export interface GardenEvent {
@@ -26,9 +29,10 @@ export function localDate(d = new Date()): string {
 function load(): GardenState {
   try {
     const s = JSON.parse(localStorage.getItem(STATE_KEY) || 'null');
-    if (s && s.v === 1) return { v: 1, wateredOn: typeof s.wateredOn === 'string' ? s.wateredOn : null };
+    if (s && s.v === 1) return { v: 1, wateredOn: typeof s.wateredOn === 'string' ? s.wateredOn : null,
+      mood: Number.isInteger(s.mood) && s.mood >= 0 && s.mood <= 3 ? s.mood : null };
   } catch { /* a corrupt state starts fresh; the log keeps the history */ }
-  return { v: 1, wateredOn: null };
+  return { v: 1, wateredOn: null, mood: null };
 }
 
 export const state: GardenState = load();
@@ -56,4 +60,5 @@ export function wateredToday(): boolean {
 }
 
 // for the designers in the console: garden.log(), garden.state
-(globalThis as any).garden = { state, log: readLog };
+(globalThis as any).garden = { state, log: readLog,
+  setMood(n: number | null) { state.mood = n; save(); } };

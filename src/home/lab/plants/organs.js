@@ -1,7 +1,7 @@
 // Organ builders shared by the plant candidates: tapered stems, leaves, petals and whole flowers.
 // Everything is built along +Z (or +Y for stems) with the pivot at its base, so a parent can pitch and sway it.
 import * as THREE from 'three';
-import { palette, matte, lerp, clamp } from '../style.js?v=e7aa2335';
+import { palette, matte, lerp, clamp } from '../style.js';
 
 // ---------- growth helpers ----------
 export const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };

@@ -13,8 +13,8 @@
 // Mood (1-4) is read from the moment, never stored: leaf pitch, flower openness, leaf tint, sway amplitude.
 // API: create(seed) -> { group, body, set({age, mood}), update(dt, t, {perk, mood}), attachPoints(), name }
 import * as THREE from 'three';
-import { palette, matte, seeded, lerp, clamp } from '../style.js?v=e7aa2335';
-import { grow, life, bladeGeo, stem, orchid, bud, ground, leafColor, smooth } from './organs.js?v=e7aa2335';
+import { palette, matte, seeded, lerp, clamp } from '../style.js';
+import { grow, life, bladeGeo, stem, orchid, bud, ground, leafColor, smooth } from './organs.js';
 
 export const name = 'Orchid';
 
@@ -45,15 +45,16 @@ export function create(seed = 1) {
   const familyOf = i => FAMILIES[(i + Math.floor(seed)) % FAMILIES.length];
 
   let built = { age: -1, mood: -1 }, swayers = [], disposables = [], points = [];
-  const spikeMat = matte(0x6e5a80, { roughness: 0.7, emissive: 0x2a1f3a, emissiveIntensity: 0.3 });   // purple-green spike
+  const spikeMat = matte(0x8a8f5e, { roughness: 0.7, emissive: 0x2a2f1a, emissiveIntensity: 0.25 });   // garden: a lighter olive spike on the light page (was 0x6e5a80 purple)
   const rootMat = matte(palette.root), rootTipMat = matte(0xc9f0c0);
 
   function rebuild(age, mood) {
     plantRoot.clear(); swayers = []; points = [];
     for (const g of disposables) g.dispose(); disposables = [];
-    const leafMat = matte(leafColor(0x2f8a4e, mood), { side: THREE.DoubleSide, roughness: 0.42, emissive: 0x0b2a14, emissiveIntensity: 0.35 });
+    // garden: leaf greens lifted for the light page (were 0x2f8a4e / 0x6fc66f)
+    const leafMat = matte(leafColor(0x46a06a, mood), { side: THREE.DoubleSide, roughness: 0.42, emissive: 0x0b2a14, emissiveIntensity: 0.35 });
     const leafMatOld = matte(leafColor(0x2f8a4e, mood, 0.75), { side: THREE.DoubleSide, roughness: 0.6 });
-    const leafMatYoung = matte(leafColor(0x6fc66f, mood), { side: THREE.DoubleSide, roughness: 0.45, emissive: 0x1c4a1c, emissiveIntensity: 0.35 });
+    const leafMatYoung = matte(leafColor(0x86d48e, mood), { side: THREE.DoubleSide, roughness: 0.45, emissive: 0x1c4a1c, emissiveIntensity: 0.35 });
     const m = maturity(age);
 
     // crown

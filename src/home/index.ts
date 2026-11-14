@@ -155,6 +155,9 @@ export function mountHome(pane: HTMLElement, opts: { onChange(): void }): HomeHa
   }
   function kick(): void { if (!raf && running()) { last = 0; raf = requestAnimationFrame(frame); } }
 
+  // for scripts/check.mjs: where on screen a hold counts
+  (globalThis as any).garden.hitBox = () => screenBox().toJSON();
+
   new ResizeObserver(fit).observe(stage);
   paint(); fit(); kick();
 

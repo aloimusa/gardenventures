@@ -1,6 +1,6 @@
 // The Home plant as the model worker's moth orchid (lab snapshot, src/home/lab/plants/orchid.js), in our clay pot
-// with our powder-blue can, re-lit for the light gradient. Never wilts: mood is pinned at its best value, and the
-// age only moves forward and stops (AGE_CAP) before the first day the model would let anything fade or wither.
+
+
 // Watering adds (perk, glow, sparks); nothing here makes the plant smaller, paler or lower than its resting pose.
 import * as THREE from 'three';
 import type { PlantRig } from './rig';
@@ -8,12 +8,10 @@ import { create as createOrchid } from './lab/plants/orchid.js';
 import { C, damp, ease, mulberry, radialTexture, reduced, soft, taperedTube } from './gardenRig';
 import { readLog, localDate } from '../state';
 
-/** The demo opens on a plant in bloom: day 21 of the orchid's timeline (five open blooms). */
-export const DEMO_START_DAYS = 21;
-/** Last age shown. The first bloom of the first spike starts to fade at day 48 (opens day 12, lasts 36), so the
- *  plant is held at day 47: every leaf, spike and bloom up to there only grows. */
-export const AGE_CAP = 47;
-const BEST_MOOD = 4;            // the orchid's mood runs 1..4; pinned so leaves never lower and blooms stay open
+/** Amit, 2026-11-14 20:15: Home has only day progression. The plant shown is the model's own timeline for the
+ *  day: the initial ladder (sapling day 0, first spike 3, first bloom ~12, five blooms 21, mature ~45), then its
+ *  42-day loop. No head start, no cap, no mood (one fixed value below). */
+const BEST_MOOD = 4;            // the orchid's mood runs 1..4; fixed: Home has no mood
 const S = 1.85;                 // orchid scale in the pot
 const SEED = 0;                 // the orchid's seed: shape jitter and bloom colour family
 
@@ -24,7 +22,15 @@ export function daysSinceFirstOpen(now = new Date()): number {
   const a = new Date(localDate(new Date(first.t)) + 'T12:00:00'), b = new Date(localDate(now) + 'T12:00:00');
   return Math.max(0, Math.round((b.getTime() - a.getTime()) / 86400000));
 }
-export const orchidAge = (days: number) => Math.min(AGE_CAP, DEMO_START_DAYS + Math.max(0, days));
+/** DEV override for demos and screenshots only: ?day=N in the URL, or localStorage 'garden.devDay'. */
+function devDay(): number | null {
+  try {
+    const q = new URLSearchParams(location.search).get('day') ?? localStorage.getItem('garden.devDay');
+    const n = q === null || q === '' ? NaN : Number(q);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  } catch { return null; }
+}
+export const orchidAge = (days: number) => devDay() ?? Math.max(0, days);
 
 export function createOrchidRig(opts: { age?: number; seed?: number } = {}): PlantRig {
   const group = new THREE.Group();
@@ -332,7 +338,7 @@ export function createOrchidRig(opts: { age?: number; seed?: number } = {}): Pla
     celebrate() {
       pulse = 1;
       for (const B of burst) { B.a = Math.random() * 6.28; B.r = 0.25 + Math.random() * 0.45; B.y = Math.random() * 0.5; }
-      setAge(orchidAge(daysSinceFirstOpen()));      // a new day may have begun since load: only ever forward
+      setAge(orchidAge(daysSinceFirstOpen()));      // a new day may have begun since load
     },
     setWatered(w) { watered = w; },
     hitTargets: [plantHit, canHit],

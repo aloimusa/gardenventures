@@ -2,6 +2,7 @@
 //   node scripts/check.mjs [url]        default http://127.0.0.1:8815/ ; the live URL also checks offline + install
 // Prints one line per check and exits 1 if any fails.
 import { createRequire } from 'node:module';
+import { reflectChecks } from './check-reflect.mjs';
 import { homedir } from 'node:os';
 const require = createRequire(import.meta.url);
 const { chromium } = require(`${homedir()}/olc/tools/playwright/node_modules/playwright`);
@@ -11,8 +12,9 @@ const ORIGIN = new URL(BASE).origin;
 const results = [];
 const check = (name, ok, detail = '') => { results.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? '  — ' + detail : ''}`); };
 
-const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
+const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist',
+  '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });   // Reflect's camera: Chromium's test pattern
+const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, permissions: ['camera'] });
 const page = await context.newPage();
 const errors = [], foreign = [];
 page.on('pageerror', e => errors.push(e.message));
@@ -144,6 +146,8 @@ const dur = await page.evaluate(() => getComputedStyle(document.querySelector('.
 check('reduced motion: panes switch without a slide', dur === '0s', `transition=${dur}`);
 await page.emulateMedia({ reducedMotion: 'no-preference' });
 
+await reflectChecks({ page, context, check, BASE });
+
 check('no console errors', errors.length === 0, errors.slice(0, 3).join(' | '));
 check('no request leaves the origin', foreign.length === 0, foreign.slice(0, 3).join(' '));
 
@@ -163,6 +167,11 @@ if (hasSW) {
   const ok = await page.evaluate(() => document.querySelector('[data-pane="home"] h1')?.innerText === 'Home' && !!document.querySelector('.stage canvas')
     && document.fonts.check('600 28px "Space Grotesk"')).catch(() => false);
   check('offline reload shows the shell with its fonts', ok);
+  await page.click('.tab[data-pane="reflect"]'); await page.waitForTimeout(500);
+  const rOff = await page.evaluate(async () => { const img = document.querySelector('.rf-item[data-id="seed-3"] .rf-img');
+    if (img && !img.complete) await new Promise(r => { img.onload = img.onerror = r; });
+    return { cards: document.querySelectorAll('.rf-item').length, seedPhoto: !!img && img.naturalWidth > 0 }; }).catch(() => ({}));
+  check('offline: Reflect shows its cards and the seed photo', rOff.cards >= 3 && rOff.seedPhoto, JSON.stringify(rOff));
   await context.setOffline(false);
 } else console.log('--   PWA checks skipped (dev server has no service worker; run against the live URL)');
 

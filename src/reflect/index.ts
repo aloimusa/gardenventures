@@ -111,10 +111,10 @@ export function mountReflect(pane: HTMLElement, opts: { onChange(): void; naviga
           <div class="rf-front"><div class="rf-tbox"><i class="rf-sp"></i><i class="rf-nt"></i><i class="rf-lsp"></i><i class="rf-ln"></i><div class="rf-txt"></div></div></div>
           <div class="rf-back">${c.photo ? '<img class="rf-img" alt="" />' : ''}<div class="rf-veil"></div><p class="rf-reply"></p></div>
         </div>
+        <button class="rf-done" type="button" hidden>Done</button>
         <button class="rf-turn" type="button"></button>
         <button class="rf-face" type="button"></button>
         <button class="rf-editkey" type="button">Rewrite</button>
-        <button class="rf-done" type="button" hidden>Done</button>
       </div>
       <div class="rf-flag" hidden>
         <p class="rf-flag-h">From your plan</p>
@@ -241,6 +241,8 @@ export function mountReflect(pane: HTMLElement, opts: { onChange(): void; naviga
       editingId = id;
       card.classList.add('editing');
       card.querySelector<HTMLButtonElement>('.rf-done')!.hidden = false;
+      card.querySelector<HTMLButtonElement>('.rf-turn')!.tabIndex = -1;      // Tab from the text goes to Done
+      card.querySelector<HTMLButtonElement>('.rf-editkey')!.tabIndex = -1;
       card.closest('.rf-item')!.setAttribute('data-noswipe', '');
       txt.setAttribute('contenteditable', 'plaintext-only');
       if (txt.contentEditable !== 'plaintext-only') txt.setAttribute('contenteditable', 'true');
@@ -263,6 +265,8 @@ export function mountReflect(pane: HTMLElement, opts: { onChange(): void; naviga
     txt.removeAttribute('contenteditable'); txt.removeAttribute('role'); txt.removeAttribute('aria-label'); txt.removeAttribute('aria-multiline');
     card.classList.remove('editing');
     card.querySelector<HTMLButtonElement>('.rf-done')!.hidden = true;
+    card.querySelector<HTMLButtonElement>('.rf-turn')!.tabIndex = 0;
+    card.querySelector<HTMLButtonElement>('.rf-editkey')!.tabIndex = 0;
     card.closest('.rf-item')!.removeAttribute('data-noswipe');
     const from = find(id).text;
     if (to !== from) log('card_text_edited', { id, from, to });

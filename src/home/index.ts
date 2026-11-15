@@ -274,6 +274,7 @@ export function mountHome(pane: HTMLElement, opts: { onChange(): void; onSkipDay
   function paintOrnaments(): void {
     if (marketOpen) closeOrnamentMenu(false);
     ornamentToggle.hidden = marketOpen;
+    skipButton.hidden = marketOpen;
     const selected = selectedOrnament, shown = equippedOrnament ?? selected ?? ORNAMENTS[0].id;
     ornamentToggle.dataset.ornament = shown;
     ornamentToggle.setAttribute('aria-label', ownedOrnaments.length ? `Choose ornament. Current: ${ornamentName(shown)}` : 'Choose ornament. No owned ornaments yet');

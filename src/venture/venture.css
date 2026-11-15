@@ -432,3 +432,17 @@
   .venture-harvest-status, .venture-travel-scenery, .venture-travel-scenery i { transition: none !important; animation: none !important; }
   .venture-shell[data-phase="complete"] .venture-model-frame canvas { opacity: .3; filter: none; }
 }
+
+/* Practice run: a hint on the plant, "Nice!" as feedback, then the plant dims so Start today's round draws the eye. */
+.venture-practice-hint { position: absolute; z-index: 4; left: 50%; top: 46%; transform: translate(-50%, -50%); pointer-events: none;
+  padding: 9px 16px; border-radius: 999px; font-size: 15px; font-weight: 600; color: #1c2422; background: rgba(255, 255, 255, .92);
+  box-shadow: 0 1px 2px rgba(28, 36, 34, .1), 0 0 0 0 rgba(66, 111, 77, .45); animation: venture-hint-pulse 1.6s ease-out infinite; white-space: nowrap; }
+.venture-practice-hint[hidden] { display: none; }
+.venture-stage[data-practice="result"] .venture-practice-hint { top: 34%; padding: 10px 22px; font-size: 24px; color: #fff; background: #426f4d;
+  animation: venture-nice-pop 420ms cubic-bezier(.2, 1.4, .4, 1) both; }
+.venture-stage[data-practice="result"] .venture-model-frame { filter: grayscale(1); opacity: .4; transition: filter 500ms ease 500ms, opacity 500ms ease 500ms; }
+.venture-stage[data-practice="result"] .venture-practice-start { animation: venture-start-pulse 1.4s ease-out 700ms infinite; }
+@keyframes venture-hint-pulse { 0% { box-shadow: 0 1px 2px rgba(28, 36, 34, .1), 0 0 0 0 rgba(66, 111, 77, .45); } 100% { box-shadow: 0 1px 2px rgba(28, 36, 34, .1), 0 0 0 16px rgba(66, 111, 77, 0); } }
+@keyframes venture-nice-pop { from { transform: translate(-50%, -50%) scale(.6); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+@keyframes venture-start-pulse { 0% { box-shadow: 0 0 0 0 rgba(66, 111, 77, .5); } 100% { box-shadow: 0 0 0 14px rgba(66, 111, 77, 0); } }
+@media (prefers-reduced-motion: reduce) { .venture-practice-hint, .venture-stage[data-practice="result"] .venture-practice-start { animation: none !important; } }

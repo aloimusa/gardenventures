@@ -179,6 +179,7 @@ export function mountVenture(pane: HTMLElement, opts: { onChange(): void }): Ven
       <div class="venture-stage" role="button" tabindex="0" aria-keyshortcuts="Enter Space" aria-label="Tap the plant to start a 2 second harvest" hidden>
         <div class="venture-model-frame" aria-hidden="true"></div>
         <div class="venture-travel-scenery" aria-hidden="true" hidden><i></i><i></i><i></i><i></i><span>Following the garden path</span></div>
+        <div class="venture-practice-hint" aria-hidden="true" hidden></div>
         <div class="venture-harvest-status" hidden>Harvesting…</div>
         <div class="venture-last-result" hidden>Last harvest <strong>+0</strong></div>
         <div class="venture-reward-flash" aria-hidden="true" hidden><span class="venture-reward-icon" data-species-icon hidden></span><span class="venture-reward-value"></span></div>
@@ -210,6 +211,7 @@ export function mountVenture(pane: HTMLElement, opts: { onChange(): void }): Ven
   const lastResult = pane.querySelector<HTMLElement>('.venture-last-result')!;
   const lastResultValue = pane.querySelector<HTMLElement>('.venture-last-result strong')!;
   const practiceStart = pane.querySelector<HTMLButtonElement>('.venture-practice-start')!;
+  const practiceHint = pane.querySelector<HTMLElement>('.venture-practice-hint')!;
   const completionNote = pane.querySelector<HTMLElement>('.venture-complete-note')!;
   const count = pane.querySelector<HTMLElement>('.venture-count')!;
   const countValue = pane.querySelector<HTMLElement>('.venture-count strong')!;
@@ -547,6 +549,11 @@ export function mountVenture(pane: HTMLElement, opts: { onChange(): void }): Ven
     lastResult.hidden = last === null || currentPhase === 'complete';
     if (last !== null) lastResultValue.textContent = `+${last}`;
     updateTravelEffects();
+    // Practice guidance on the plant itself: where to press, then a plain "Nice!", after which the plant dims and Start stands out.
+    const practiceStatus = currentPhase === 'practice' ? practice?.status ?? '' : '';
+    stage.dataset.practice = practiceStatus;
+    practiceHint.hidden = practiceStatus !== 'ready' && practiceStatus !== 'result';
+    practiceHint.textContent = practiceStatus === 'result' ? 'Nice!' : 'Press the plant';
     practiceStart.hidden = currentPhase !== 'practice';
     practiceStart.disabled = practice?.status !== 'result';
     moveButton.hidden = currentPhase === 'selection' || currentPhase === 'complete' || currentPhase === 'practice';

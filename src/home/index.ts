@@ -339,7 +339,7 @@ export function mountHome(pane: HTMLElement, opts: { onChange(): void; onSkipDay
       stage.tabIndex = open ? -1 : 0;
       status.tabIndex = -1; // Home's completed indicator stays passive in either world.
       closeOrnamentMenu(false);
-      ornamentToggle.hidden = open;
+      ornamentToggle.hidden = open; skipButton.hidden = open;
       if (!open) paintOrnaments();
       kick(); draw();
     },

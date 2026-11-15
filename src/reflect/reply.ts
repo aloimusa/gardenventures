@@ -20,7 +20,7 @@ export interface Reply { reply: string; linkId: string | null; flagged: boolean;
 interface LegacyEntry { text: string; hasPhoto: boolean; mood: number | null }
 
 export const FALLBACK = 'It is down on the card now.';
-export const REPLY_TIMEOUT_MS = 5000;
+export const REPLY_TIMEOUT_MS = 12000; // several visitors at once queue behind one model
 
 const BLOCKED_TOKENS = ['should', 'try', 'proud', 'great', 'sorry', 'remember', 'why'];
 const WORD_PATTERN = /[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*/gu;

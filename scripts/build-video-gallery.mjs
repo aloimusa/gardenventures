@@ -1,5 +1,6 @@
 // Build the framework-free Garden demo gallery from the existing rendered MP4s.
 // Run directly with `node scripts/build-video-gallery.mjs`, or let vite.config.ts call it after a build.
+import { existsSync } from 'node:fs';
 import { copyFile, mkdir, rm, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
@@ -241,6 +242,8 @@ h1, h2, h3, p { margin-top: 0; }
 `;
 
 export async function buildVideoGallery({ root = PROJECT_ROOT, outDir = join(root, 'dist') } = {}) {
+  // The demo recordings are not part of the repository; without them the build simply has no /video/ gallery.
+  if (!existsSync(join(root, 'artifacts/demo'))) return;
   const indexedClips = clips.map(clip => ({ ...clip, ...probe(join(root, clip.source)) }));
   const videoRoot = join(outDir, 'video');
   await rm(videoRoot, { recursive: true, force: true });

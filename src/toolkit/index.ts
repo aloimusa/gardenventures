@@ -1,4 +1,5 @@
-import { localDate, log, skipDay } from '../state';
+import { localDate, log } from '../state';
+import { unlockAllOrnaments } from '../market/model';
 import {
   callablePhone, ensureSafetyPlanDocument, newContact, saveSafetyPlanDocument,
   type PlanBlock, type SafetyContact, type SafetyPlanDocument,
@@ -617,8 +618,12 @@ export function mountToolkit(pane: HTMLElement, opts: { onDayChange(): void; onP
       'The construct, observations, scoring, ground truth, and validation are undefined. Venture timing and plant appearance are not drift measures.')),
   });
   const skip = addOption({
-    id: 'skip-day', label: 'Skip day', detail: 'Advance to the next day', icon: '→',
-    onSelect() { skipDay(); paint(); opts.onDayChange(); },
+    id: 'unlock-all', label: 'Unlock everything', detail: 'All Venture plants and ornaments', icon: '★',
+    onSelect() {
+      try { localStorage.setItem('garden.unlockAll', '1'); } catch { /* storage unavailable: nothing to unlock into */ }
+      unlockAllOrnaments(); log('demo_unlock_all', {});
+      location.reload();
+    },
   });
   const reset = addOption({
     id: 'reset-demo', label: 'Reset demo', detail: 'Start fresh in this browser', icon: '↺',
@@ -657,7 +662,7 @@ export function mountToolkit(pane: HTMLElement, opts: { onDayChange(): void; onP
 
   function paint(): void {
     date.textContent = `Demo date · ${localDate()}`;
-    skip.querySelector<HTMLElement>('small')!.textContent = `Next day · ${localDate()}`;
+    skip.querySelector<HTMLElement>('small')!.textContent = localStorage.getItem('garden.unlockAll') === '1' ? 'Everything is unlocked' : 'All Venture plants and ornaments';
     const small = planButton.querySelector<HTMLElement>('small')!;
     if (!saveTimer) small.textContent = planDetail();
   }

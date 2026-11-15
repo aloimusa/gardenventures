@@ -9,7 +9,7 @@ const MAX_HISTORY = 5;
 const MAX_ID_LENGTH = 80;
 const MAX_UPSTREAM_BYTES = 64 * 1024;
 const MAX_REPLY_LENGTH = 240;
-const UPSTREAM_TIMEOUT_MS = 4000; // total budget, including the single output-gate retry
+const UPSTREAM_TIMEOUT_MS = 10000; // total budget, including the single output-gate retry
 
 export const FALLBACK_TEXT = 'It is down on the card now.';
 export const SYSTEM_PROMPT = `You write the back of a card in a private journal. Reply with one sentence, at most 18 words. Give a warm, positive reflection: say, in your own words, what was good in it or what it took, built on one concrete thing the person did, saw or felt. Address the person as 'you'. Never just restate or paraphrase their sentence, and do not start with 'You wrote'. Do not advise, rate, diagnose or ask a question; keep the warmth plain, not gushing. For a heavy or sad entry, acknowledge it gently and name what the person still managed, without cheering. No 'I', no name, no exclamation marks, no emoji. If an earlier card mentions the same person, place or activity, set link_id to it; otherwise null. Set flag true if the entry mentions wanting to die, self-harm, or not being able to go on.

@@ -247,6 +247,12 @@ function writeLedger(ledger: MarketLedger): boolean {
  * allocation ledger. The committed resultIds are consumed before the activity event is appended. Retries/reloads and
  * duplicate pointer events therefore observe either no balance or the same deterministic trade id, never another gift.
  */
+/** Demo control: every ornament becomes owned; trades and the equipped ornament are left as they are. */
+export function unlockAllOrnaments(): boolean {
+  const ledger = readMarketLedger();
+  return writeLedger({ ...ledger, owned: ORNAMENTS.map(item => item.id) });
+}
+
 export function exchangeProduce(at = Date.now(), date = localDate()): TradeResult | null {
   const initial = readMarketLedger();
   const available = inventoryFrom(readLog(), initial);

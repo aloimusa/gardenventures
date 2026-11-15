@@ -72,7 +72,7 @@ export function mountHome(pane: HTMLElement, opts: { onChange(): void; onSkipDay
     const d = Math.max(size.y / 2 / tan / 0.62, size.x / 2 / (tan * camera.aspect) / 0.78) + size.z;
     camera.position.set(centre.x, centre.y + d * 0.12, centre.z + d);
     camera.lookAt(centre);
-    camera.setViewOffset(w, h, 0, -h * 0.07, w, h);
+    camera.setViewOffset(w, h, w * 0.06, -h * 0.10, w, h); // plant sits a little left and low so the full spray stays in view
     camera.updateProjectionMatrix();
     camera.updateMatrixWorld();
     draw();

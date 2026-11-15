@@ -487,3 +487,6 @@ h1 { margin: 0; font: 600 28px/1.15 "Space Grotesk", system-ui, sans-serif; lett
   .wormhole-rim::before, .market-world, .market-world *, .home-ornaments { transition: none !important; animation: none !important; }
   .venture-pop { animation: none; opacity: 0; }
 }
+
+/* Wind down: the shapes are plain rounded blobs; the border-radius contours above carry them. */
+.wd-visual .wd-shape, .wd-visual[data-tone] .wd-shape, .wd-visual[data-shape="oval"] .wd-shape { clip-path: none; }

@@ -257,7 +257,8 @@ export function mountVenture(pane: HTMLElement, opts: { onChange(): void }): Ven
     queueMicrotask(() => { if (revision === announcementRevision) live.textContent = text; });
   }
 
-  const unlockedCount = () => Math.min(elapsed + 1, VENTURE_PLANTS.length);
+  // Demo control (Toolkit, Unlock everything): every plant is available at once.
+  const unlockedCount = () => localStorage.getItem('garden.unlockAll') === '1' ? VENTURE_PLANTS.length : Math.min(elapsed + 1, VENTURE_PLANTS.length);
   const unlocked = (id: VenturePlantId) => PLANT_IDS.indexOf(id) < unlockedCount();
   const dailyPlant = () => VENTURE_PLANTS[elapsed % VENTURE_PLANTS.length].id;
   const currentRound = () => replay?.round ?? null;

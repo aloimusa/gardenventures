@@ -7,12 +7,15 @@ import { ICONS, MARK } from './icons';
 import { log, wateredToday, type PaneId } from './state';
 import { mountHome } from './home';
 import { mountReflect } from './reflect';
+import { mountVenture } from './venture';
+import { mountToolkit } from './toolkit';
+import { mountWinddown } from './winddown';
 
 interface PaneDef { id: PaneId; label: string; title: string; sub?: string; completable: boolean }
 
 const PANES: PaneDef[] = [
-  { id: 'winddown', label: 'Wind down', title: 'Wind down', sub: 'A sound for the night.', completable: true },
-  { id: 'reflect', label: 'Reflect', title: 'Reflect', sub: 'Tap a card to turn it. Hold it to rewrite. Older cards are above.', completable: true },
+  { id: 'winddown', label: 'Wind down', title: 'Wind down', sub: 'A sound for a little while.', completable: true },
+  { id: 'reflect', label: 'Reflect', title: 'Reflect', sub: 'Tap a card to turn it. Hold it to rewrite or remove. Older cards are above.', completable: true },
   { id: 'home', label: 'Home', title: 'Home', completable: true },
   { id: 'venture', label: 'Venture', title: 'Venture', sub: 'The garden. One round a day.', completable: true },
   { id: 'toolkit', label: 'Toolkit', title: 'Toolkit', sub: 'Your plan, your person, your line.', completable: false },
@@ -22,7 +25,7 @@ const app = document.getElementById('app')!;
 app.innerHTML = `
   <main class="viewport"><div class="track">${PANES.map(p => `
     <section class="pane" data-pane="${p.id}" aria-label="${p.label}" ${p.id === 'home' ? '' : 'aria-hidden="true"'}>
-      <div class="head"><h1>${p.title}</h1>${p.sub ? `<p class="sub">${p.sub}</p>` : ''}</div>
+      <div class="head sr"><h1>${p.title}</h1>${p.sub ? `<p class="sub">${p.sub}</p>` : ''}</div>
     </section>`).join('')}
   </div></main>
   <nav class="bar" aria-label="Panes">${PANES.map(p => `
@@ -37,11 +40,17 @@ const tabs = [...bar.querySelectorAll<HTMLButtonElement>('.tab')];
 const panes = [...track.querySelectorAll<HTMLElement>('.pane')];
 const themeMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')!;
 
-const home = mountHome(panes.find(p => p.dataset.pane === 'home')!, { onChange: refreshMarks });
+const home = mountHome(panes.find(p => p.dataset.pane === 'home')!, { onChange: refreshMarks, onSkipDay: () => refreshAll() });
 const reflect = mountReflect(panes.find(p => p.dataset.pane === 'reflect')!, {
   onChange: refreshMarks,
-  navigate: id => show(PANES.findIndex(p => p.id === id), 'link'),
+  navigate: id => {
+    if (id === 'toolkit') toolkit.openPlan();
+    show(PANES.findIndex(p => p.id === id), 'link');
+  },
 });
+const venture = mountVenture(panes.find(p => p.dataset.pane === 'venture')!, { onChange: refreshMarks });
+const toolkit = mountToolkit(panes.find(p => p.dataset.pane === 'toolkit')!, { onDayChange: refreshAll, onPlanChange: reflect.refresh });
+const winddown = mountWinddown(panes.find(p => p.dataset.pane === 'winddown')!, { onChange: refreshMarks });
 
 let index = PANES.findIndex(p => p.id === 'home');
 
@@ -59,40 +68,32 @@ function show(i: number, why: string): void {
   themeMeta.content = night ? '#07090c' : '#f4f6f3';
   home.setVisible(id === 'home');
   reflect.setVisible(id === 'reflect');
+  venture.setVisible(id === 'venture');
   if (changed) log('pane_view', { pane: id, via: why });
 }
 
 function refreshMarks(): void {
-  const done: Record<string, boolean> = { home: wateredToday(), reflect: reflect.doneToday() };
+  const done: Record<string, boolean> = { home: wateredToday(), reflect: reflect.doneToday(), venture: venture.doneToday(), winddown: winddown.doneToday() };
   tabs.forEach(t => t.classList.toggle('done', !!done[t.dataset.pane!]));
 }
 
 tabs.forEach((t, k) => t.addEventListener('click', () => show(k, 'bar')));
 
-// Swipe between panes: a quick, mostly horizontal flick. The bar stays the primary control; a hold on the plant
-// that wanders is not a flick (it is slow), so the two do not fight.
-let sx = 0, sy = 0, st = 0, sid = -1;
-const viewport = app.querySelector<HTMLElement>('.viewport')!;
-viewport.addEventListener('pointerdown', e => {
-  // writing, a card being rewritten, and the camera keep their own gestures (text selection, caret drags)
-  if ((e.target as Element).closest?.('[data-noswipe]')) { sid = -1; return; }
-  sid = e.pointerId; sx = e.clientX; sy = e.clientY; st = performance.now(); });
-viewport.addEventListener('pointerup', e => {
-  if (e.pointerId !== sid) return;
-  sid = -1;
-  const dx = e.clientX - sx, dy = e.clientY - sy, dt = performance.now() - st;
-  if (Math.abs(dx) > 60 && Math.abs(dx) > 1.6 * Math.abs(dy) && dt < 600) {
-    home.cancelHold();
-    show(index + (dx < 0 ? 1 : -1), 'swipe');
-  }
-});
-viewport.addEventListener('pointercancel', () => { sid = -1; });
+function refreshAll(): void {
+  refreshMarks();
+  home.refresh();
+  reflect.refresh();
+  venture.refresh();
+  toolkit.refresh();
+  winddown.refresh();
+}
 
 // the local date can turn while the app is open
-setInterval(() => { refreshMarks(); home.refresh(); reflect.refresh(); }, 30_000);
+setInterval(refreshAll, 30_000);
 document.addEventListener('visibilitychange', () => {
   home.setPageVisible(document.visibilityState === 'visible');
-  if (document.visibilityState === 'visible') { refreshMarks(); home.refresh(); }
+  venture.setPageVisible(document.visibilityState === 'visible');
+  if (document.visibilityState === 'visible') refreshAll();
 });
 
 log('app_open', { standalone: matchMedia('(display-mode: standalone)').matches });
@@ -100,5 +101,5 @@ show(index, 'open');
 refreshMarks();
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  addEventListener('load', () => navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).catch(() => {}));
 }

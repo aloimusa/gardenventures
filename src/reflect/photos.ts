@@ -24,6 +24,13 @@ export async function putPhoto(blob: Blob): Promise<string> {
   return id;
 }
 
+/** Empty the local photo store for an explicit demo reset; the database/schema can remain available. */
+export async function clearPhotos(): Promise<void> {
+  await tx('readwrite', s => s.clear());
+  for (const url of urls.values()) URL.revokeObjectURL(url);
+  urls.clear();
+}
+
 const urls = new Map<string, string>();
 export async function photoUrl(id: string): Promise<string | null> {
   if (id === SEED_PHOTO) return seedRiver;

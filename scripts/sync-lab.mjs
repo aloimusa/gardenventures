@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 const SRC = '/srv/http/garden/js', DST = new URL('../src/home/lab/', import.meta.url).pathname;
-const FILES = ['style.js', 'plant.js', 'can.js', 'plants/orchid.js', 'plants/organs.js'];
+const FILES = ['style.js', 'plants/orchid.js', 'plants/organs.js'];
 const force = process.argv.includes('--force');
 const sha = p => createHash('sha256').update(readFileSync(p)).digest('hex');
 const prev = existsSync(`${DST}SOURCE.json`) ? JSON.parse(readFileSync(`${DST}SOURCE.json`, 'utf8')) : { files: {} };

@@ -5,8 +5,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -p . && vite build",
-    "deploy": "npm run build && rsync -a --delete dist/ /srv/http/garden-app/",
+    "deploy": "npm run build && rsync -a --delete --exclude video/ dist/ /srv/http/garden-app/",
     "check": "node scripts/check.mjs",
+    "check:backend": "node scripts/check-backend.mjs",
+    "server": "node --env-file-if-exists=.env.local server/index.js",
     "icons": "node scripts/icons.mjs",
     "sync-lab": "node scripts/sync-lab.mjs"
   },
@@ -20,6 +22,7 @@
   "dependencies": {
     "@fontsource/inter": "^5.3.0",
     "@fontsource/space-grotesk": "^5.3.0",
+    "opencode-ai": "^1.19.5",
     "three": "^0.187.0"
   },
   "private": true

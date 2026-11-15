@@ -7,7 +7,8 @@ export const MOOD_COLOUR = ['#aebfd9', '#d3dcea', '#f6e7cf', '#f2c88f'] as const
 export const NO_MOOD_COLOUR = '#e6e9e6';
 export const NO_MOOD_RULE = '#cfd6d2';
 
-export const moodName = (m: Mood) => (m === null ? 'No mood' : MOOD_NAME[m]);
+// null is reserved for historical log records: neutral grey and explicit wording, never an invented mood.
+export const moodName = (m: Mood) => (m === null ? 'No mood recorded' : MOOD_NAME[m]);
 export const moodColour = (m: Mood) => (m === null ? NO_MOOD_COLOUR : MOOD_COLOUR[m]);
 export const nextMood = (m: Mood): Mood => (m === null ? 0 : ((m + 1) % 4) as Mood);
 

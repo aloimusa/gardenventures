@@ -1,3 +1,15 @@
 node_modules
 dist
 *.log
+.env.local
+.env.*.local
+
+# local-only: agent config, recordings, working notes (kept in ../garden-private)
+opencode.json
+artifacts/
+research_notes/
+review/
+reports/
+*.pdf
+.env
+.env.*

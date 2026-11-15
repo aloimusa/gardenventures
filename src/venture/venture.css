@@ -1,0 +1,434 @@
+/* Venture v4: unlocked cards, one-tap harvests and visible ten-second travel. */
+.pane[data-pane="venture"] .head { padding-top: calc(42px + env(safe-area-inset-top)); }
+.venture-shell {
+  inset: calc(20px + env(safe-area-inset-top)) 0 0;
+  grid-template-rows: auto minmax(150px, 1fr);
+  gap: 10px;
+  padding: 8px 16px 16px;
+}
+.venture-top { display: grid; gap: 8px; min-width: 0; }
+.venture-crate { min-width: 0; }
+.venture-crate[hidden] { display: none; }
+.venture-crate-scroll {
+  max-height: 112px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #d9dfd1;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .7);
+  scrollbar-width: thin;
+}
+.venture-crate-scroll:focus-visible { outline: 2px solid #246da8; outline-offset: 2px; }
+.venture-crate-table { width: 100%; border-collapse: collapse; table-layout: fixed; color: #374c3d; font-size: 11px; }
+.venture-crate-table caption { padding: 6px 10px 3px; color: #344b3b; text-align: left; font: 600 12px/1.25 "Space Grotesk", sans-serif; }
+.venture-crate-table thead { color: #627061; font-size: 9px; font-weight: 500; }
+.venture-crate-table thead th { padding: 2px 10px 5px; text-align: left; font-weight: 500; }
+.venture-crate-table thead th:last-child, .venture-crate-table td { width: 94px; text-align: right; }
+.venture-crate-table tbody th, .venture-crate-table tbody td { padding: 3px 10px; border-top: 1px solid rgba(106, 125, 102, .09); }
+.venture-crate-table tbody th { text-align: left; font-weight: 500; }
+.venture-crate-table tbody td { vertical-align: middle; font-weight: 600; font-variant-numeric: tabular-nums; }
+.venture-crate-icon { display: inline-block; width: 23px; height: 23px; margin-right: 7px; vertical-align: middle; }
+.venture-crate-icon svg { display: block; width: 23px; height: 23px; }
+.venture-crate-empty td { padding: 7px 10px 9px !important; color: #667260; text-align: left !important; font-weight: 400 !important; line-height: 1.35; }
+.venture-heading-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; min-height: 44px; }
+.venture-heading-copy { flex: 1; min-width: 0; }
+.venture-setup {
+  min-height: 20px;
+  margin: 0;
+  color: #314a38;
+  font: 600 16px/1.3 "Space Grotesk", sans-serif;
+  letter-spacing: -.01em;
+}
+.venture-setup:focus { outline: none; }
+.venture-shell:not([data-phase="selection"]) .venture-setup { font-size: 14px; white-space: nowrap; }
+.venture-rules {
+  margin: 4px 0 0;
+  color: #415447;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.venture-shell:not([data-phase="selection"]):not([data-phase="practice"]) .venture-rules { display: none; }
+.venture-hud { display: flex; flex: none; align-items: center; gap: 9px; }
+.venture-count {
+  position: static;
+  top: auto;
+  left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  padding: 9px 12px;
+  border-radius: 16px;
+  color: #2f4c38;
+  background: rgba(255, 255, 255, .84);
+  box-shadow: 0 2px 9px rgba(52, 78, 52, .035);
+  white-space: nowrap;
+}
+.venture-count[hidden] { display: none; }
+.venture-count strong { font: 600 28px/1 "Space Grotesk", sans-serif; font-variant-numeric: tabular-nums; }
+.venture-count span { font-size: 11px; font-weight: 500; }
+.venture-time {
+  position: static;
+  min-width: 72px;
+  padding: 9px 12px;
+  border-radius: 16px;
+  color: #2f4c38;
+  background: rgba(255, 255, 255, .86);
+  text-align: center;
+  font: 600 22px/1.1 "Space Grotesk", sans-serif;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 2px 9px rgba(52, 78, 52, .035);
+}
+
+.venture-select { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+.venture-select[hidden] { display: none; }
+.venture-plants,
+.venture-shell[data-phase="selection"] .venture-plants {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 2px 4px 10px 2px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  touch-action: pan-y;
+}
+.venture-plants[hidden] { display: none; }
+.venture-plant-item { flex: none; min-width: 0; margin: 0; }
+.venture-choice {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 13px;
+  width: 100%;
+  min-width: 0;
+  min-height: 88px;
+  padding: 16px 17px;
+  overflow: hidden;
+  border: 1px solid #d5dfd4;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .86);
+  box-shadow: 0 3px 13px rgba(49, 73, 54, .05);
+  color: #293b2f;
+  opacity: 1;
+  text-align: left;
+  transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+.venture-choice.is-new {
+  border-color: #d4c184;
+  background: linear-gradient(110deg, rgba(255, 255, 255, .96), rgba(255, 249, 224, .94));
+  box-shadow: 0 4px 16px rgba(108, 91, 41, .08);
+}
+.venture-choice:active { background: #f0f4ec; }
+.venture-card-mark {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: #edf2e9;
+}
+.venture-choice.is-new .venture-card-mark { background: #f5efcf; }
+.venture-card-icon { display: grid; place-items: center; width: 30px; height: 30px; }
+.venture-card-icon svg { display: block; width: 100%; height: 100%; }
+.venture-dot { width: 13px; height: 13px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(34, 53, 37, .08); }
+.venture-choice[data-plant="apple"] .venture-dot,
+.venture-choice[data-plant="tomato"] .venture-dot, .venture-choice[data-plant="strawberry"] .venture-dot { background: #d96559; }
+.venture-choice[data-plant="banana"] .venture-dot { background: #dfbd45; }
+.venture-choice[data-plant="mandarin"] .venture-dot { background: #e7993e; }
+.venture-choice[data-plant="mango"] .venture-dot { background: #d9a847; }
+.venture-choice[data-plant="pear"] .venture-dot { background: #abb951; }
+.venture-choice[data-plant="blueberry"] .venture-dot { background: #6d77ad; }
+.venture-choice[data-plant="eggplant"] .venture-dot { background: #80658d; }
+.venture-card-sparkle {
+  position: absolute;
+  top: -7px;
+  right: -6px;
+  display: none;
+  color: #8a671d;
+  font-size: 19px;
+  line-height: 1;
+  transform-origin: center;
+  animation: venture-new-sparkle 2.2s ease-in-out infinite;
+}
+.venture-choice.is-new .venture-card-sparkle { display: block; }
+.venture-card-copy { flex: 1; display: grid; gap: 6px; min-width: 0; }
+.venture-card-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 8px; min-width: 0; }
+.venture-card-heading strong { font: 600 18px/1.2 "Space Grotesk", sans-serif; letter-spacing: -.01em; }
+.venture-new {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 23px;
+  padding: 3px 8px;
+  border: 1px solid #ddce9c;
+  border-radius: 999px;
+  background: #fbf3d7;
+  color: #604a18;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.venture-new[hidden] { display: none; }
+.venture-visits { color: #465a4b; font-size: 12px; line-height: 1.35; }
+.venture-card-arrow { flex: none; margin-left: 2px; color: #596f5f; font: 400 27px/1 "Space Grotesk", sans-serif; }
+@keyframes venture-new-sparkle {
+  0%, 100% { opacity: .62; transform: scale(.82) rotate(-8deg); }
+  50% { opacity: 1; transform: scale(1.12) rotate(10deg); }
+}
+@media (hover: hover) {
+  .venture-choice:hover { border-color: #a8bfa9; background: #fff; box-shadow: 0 5px 18px rgba(49, 73, 54, .09); }
+  .venture-choice.is-new:hover { border-color: #bca55e; background: #fffaf0; }
+}
+
+.venture-stage[hidden] { display: none; }
+.venture-stage {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 26px;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  background: radial-gradient(ellipse at 47% 28%, #fbfaf2 0%, #e2ecdc 53%, #cbdcbf 100%);
+  box-shadow: inset 0 0 0 1px rgba(79, 103, 76, .07), 0 8px 24px rgba(54, 78, 53, .055);
+}
+.venture-model-frame { position: absolute; z-index: 2; inset: 0 0 92px; overflow: hidden; pointer-events: none; }
+.venture-model-frame canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transition: opacity 420ms ease, filter 420ms ease;
+}
+.venture-stage[data-moving="true"], .venture-stage[data-harvesting="true"], .venture-stage[aria-busy="true"] { cursor: wait; }
+.venture-stage:focus-visible { outline: 3px solid #246da8; outline-offset: -4px; }
+.venture-stage[aria-disabled="true"] { cursor: default; }
+.venture-stage[aria-busy="true"] { cursor: progress; }
+
+.venture-harvest-status {
+  position: absolute;
+  z-index: 5;
+  top: 43%;
+  left: 50%;
+  padding: 10px 17px;
+  border: 1px solid rgba(255, 255, 255, .9);
+  border-radius: 999px;
+  background: rgba(249, 252, 241, .92);
+  box-shadow: 0 4px 20px rgba(76, 111, 63, .12);
+  color: #315f3d;
+  font: 600 14px/1.2 "Space Grotesk", sans-serif;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: venture-harvest-breathe 900ms ease-in-out infinite alternate;
+}
+.venture-harvest-status[hidden], .venture-last-result[hidden], .venture-travel-scenery[hidden] { display: none; }
+@keyframes venture-harvest-breathe { from { box-shadow: 0 4px 14px rgba(76, 111, 63, .08); } to { box-shadow: 0 5px 26px rgba(76, 111, 63, .24); } }
+.venture-last-result {
+  position: absolute;
+  z-index: 5;
+  top: 14px;
+  left: 50%;
+  padding: 7px 12px;
+  border: 1px solid rgba(209, 222, 202, .85);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .88);
+  color: #365640;
+  font-size: 11px;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.venture-last-result strong { margin-left: 5px; color: #245438; font: 600 16px/1 "Space Grotesk", sans-serif; }
+.venture-travel-scenery {
+  position: absolute;
+  z-index: 1;
+  inset: 0 0 92px;
+  overflow: hidden;
+  opacity: 0;
+  background: radial-gradient(circle at 72% 24%, #f7efb5 0 8%, transparent 25%), linear-gradient(150deg, #dfeecf, #bcd8bd 55%, #92b9aa);
+  transition: opacity 300ms ease;
+  pointer-events: none;
+}
+.venture-stage[data-travel="transit"] .venture-travel-scenery { opacity: 1; }
+.venture-travel-scenery i {
+  position: absolute;
+  width: 62px;
+  height: 20px;
+  border-radius: 100% 0 100% 0;
+  background: rgba(69, 117, 69, .32);
+  animation: venture-path-leaf 3.4s linear infinite;
+}
+.venture-travel-scenery i:nth-child(1) { top: 20%; left: -12%; }
+.venture-travel-scenery i:nth-child(2) { top: 48%; left: -18%; width: 44px; height: 15px; animation-delay: -1.2s; }
+.venture-travel-scenery i:nth-child(3) { top: 68%; left: -10%; width: 78px; height: 24px; animation-delay: -2.4s; }
+.venture-travel-scenery i:nth-child(4) { top: 35%; left: -22%; width: 35px; height: 13px; animation-delay: -.6s; }
+.venture-travel-scenery span {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .88);
+  color: #315c42;
+  font: 600 12px/1.2 "Space Grotesk", sans-serif;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+}
+@keyframes venture-path-leaf { to { transform: translateX(480px) rotate(240deg); } }
+.venture-reward-flash {
+  position: absolute;
+  z-index: 6;
+  top: 43%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 17px;
+  border: 1px solid rgba(255, 255, 255, .92);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .95);
+  box-shadow: 0 5px 20px rgba(45, 72, 48, .14);
+  color: #245438;
+  font: 600 28px/1 "Space Grotesk", sans-serif;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: venture-result 620ms ease-out both;
+}
+.venture-reward-flash[hidden], .venture-reward-icon[hidden] { display: none; }
+.venture-reward-icon { flex: none; width: 34px; height: 34px; }
+.venture-reward-icon svg { display: block; width: 100%; height: 100%; }
+@keyframes venture-result {
+  0% { opacity: 0; transform: translate(-50%, -36%) scale(.85); }
+  24% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  76% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -62%) scale(1); }
+}
+
+.venture-actions {
+  position: absolute;
+  z-index: 4;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px 16px;
+}
+.venture-actions button {
+  /* 70% of the stage itself after the padded content box is accounted for. */
+  width: calc(70% + 22.4px);
+  min-width: 0;
+  min-height: 60px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+.venture-actions button[hidden] { display: none; }
+.venture-move { border: 1px solid #77917b; background: rgba(255, 255, 255, .9); color: #284b33; }
+.venture-practice-start { border: 1px solid #426f4d; background: #426f4d; color: #fff; }
+.venture-practice-start:disabled { cursor: wait !important; }
+.venture-move-narrow { display: none; }
+.venture-actions button:disabled { cursor: wait; opacity: .5; }
+.venture-actions :focus-visible, .venture-choice:focus-visible { outline: 3px solid #246da8; outline-offset: 2px; }
+
+/* Completion preserves the total while the model recedes. The count itself is centered by absolute stage geometry. */
+.venture-shell[data-phase="complete"] .venture-model-frame canvas { opacity: .2; filter: blur(5px); }
+.venture-shell[data-phase="complete"] .venture-setup { opacity: .62; }
+.venture-shell[data-phase="complete"] .venture-time { opacity: .72; }
+.venture-shell[data-phase="complete"] .venture-count {
+  position: absolute;
+  z-index: 8;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 23px 31px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 8px 28px rgba(48, 74, 49, .13);
+  transform: translate(-50%, -50%);
+}
+.venture-shell[data-phase="complete"] .venture-count strong { font-size: 58px; line-height: 1; }
+.venture-shell[data-phase="complete"] .venture-count span { font-size: 14px; }
+.venture-complete-note {
+  position: absolute;
+  z-index: 7;
+  top: calc(50% + 83px);
+  left: 50%;
+  margin: 0;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(250, 252, 247, .8);
+  color: #435a48;
+  font-size: 11px;
+  text-align: center;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+.venture-complete-note[hidden] { display: none; }
+
+@media (max-width: 450px) {
+  .venture-move-wide { display: none; }
+  .venture-move-narrow { display: inline; }
+  .venture-actions button { padding-inline: 10px; }
+}
+@media (max-height: 700px) {
+  .pane[data-pane="venture"] .head { padding-top: calc(26px + env(safe-area-inset-top)); }
+  .pane[data-pane="venture"] .head .sub { margin-top: 5px; font-size: 12px; }
+  .venture-shell { inset: calc(12px + env(safe-area-inset-top)) 0 0; grid-template-rows: auto minmax(135px, 1fr); gap: 7px; padding-top: 5px; }
+  .venture-choice { min-height: 78px; padding-block: 12px; }
+  .venture-rules { margin-top: 3px; font-size: 10px; }
+  .venture-model-frame { bottom: 82px; }
+  .venture-actions { padding: 0 14px 14px; }
+  .venture-actions button { width: calc(70% + 19.6px); min-height: 54px; }
+  .venture-complete-note { top: calc(50% + 75px); font-size: 10px; }
+}
+@media (max-width: 350px) {
+  .venture-shell { padding-inline: 12px; }
+  .venture-choice { gap: 10px; padding-inline: 13px; }
+  .venture-card-mark { width: 37px; height: 37px; border-radius: 12px; }
+  .venture-card-heading strong { font-size: 17px; }
+  .venture-new { padding-inline: 6px; font-size: 9px; }
+  .venture-setup { font-size: 14px; }
+  .venture-shell:not([data-phase="selection"]) .venture-setup { font-size: 12px; }
+  .venture-count { padding-inline: 9px; }
+  .venture-count span { display: none; }
+  .venture-count strong { font-size: 24px; }
+  .venture-time { min-width: 63px; padding-inline: 9px; font-size: 19px; }
+  .venture-actions { gap: 7px; padding-inline: 12px; }
+  .venture-actions button { width: calc(70% + 16.8px); font-size: 12px; }
+  .venture-shell[data-phase="complete"] .venture-count span { display: block; }
+}
+@media (min-width: 600px) {
+  .venture-shell { padding-inline: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .venture-stage, .venture-model-frame, .venture-model-frame canvas, .venture-choice, .venture-actions button {
+    transition: none !important;
+    animation: none !important;
+  }
+  .venture-card-sparkle { animation: none !important; opacity: 1; transform: none; }
+  .venture-reward-flash { animation: none !important; opacity: 1; transform: translate(-50%, -50%); }
+  .venture-harvest-status, .venture-travel-scenery, .venture-travel-scenery i { transition: none !important; animation: none !important; }
+  .venture-shell[data-phase="complete"] .venture-model-frame canvas { opacity: .3; filter: none; }
+}

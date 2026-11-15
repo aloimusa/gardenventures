@@ -1,13 +1,18 @@
 // Behaviour checks for the garden shell and Home. Rerunnable by anyone on tuf:
-//   node scripts/check.mjs [url]        default http://127.0.0.1:8815/ ; the live URL also checks offline + install
+//   node scripts/check.mjs [url] [--nav-only]   default http://127.0.0.1:8815/ ; the live URL also checks offline + install
 // Prints one line per check and exits 1 if any fails.
 import { createRequire } from 'node:module';
 import { reflectChecks } from './check-reflect.mjs';
+import { homeChecks } from './check-home.mjs';
+import { ventureChecks } from './check-venture.mjs';
+import { toolkitChecks, toolkitResetChecks } from './check-toolkit.mjs';
+import { winddownChecks } from './check-winddown.mjs';
 import { homedir } from 'node:os';
 const require = createRequire(import.meta.url);
 const { chromium } = require(`${homedir()}/olc/tools/playwright/node_modules/playwright`);
 
-const BASE = process.argv[2] || 'http://127.0.0.1:8815/';
+const NAV_ONLY = process.argv.includes('--nav-only');
+const BASE = process.argv.slice(2).find(a => !a.startsWith('--')) || 'http://127.0.0.1:8815/';
 const ORIGIN = new URL(BASE).origin;
 const results = [];
 const check = (name, ok, detail = '') => { results.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? '  — ' + detail : ''}`); };
@@ -21,80 +26,130 @@ page.on('pageerror', e => errors.push(e.message));
 page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 page.on('request', r => { const u = r.url(); if (!u.startsWith('data:') && !u.startsWith('blob:') && new URL(u).origin !== ORIGIN) foreign.push(u); });
 
-const events = () => page.evaluate(() => JSON.parse(localStorage.getItem('garden.log') || '[]'));
-const count = async type => (await events()).filter(e => e.type === type).length;
-const text = sel => page.locator(sel).first().innerText();
-const homeDone = () => page.evaluate(() => document.querySelector('.tab[data-pane="home"]').classList.contains('done'));
-const visiblePane = () => page.evaluate(() => [...document.querySelectorAll('.pane')]
-  .find(p => Math.abs(p.getBoundingClientRect().left) < 2)?.dataset.pane);
-async function holdOnPlant(ms, wander = 0) {
-  const b = await page.evaluate(() => garden.hitBox());
-  const x = b.x + b.width * 0.3, y = b.y + b.height * 0.7;
-  await page.mouse.move(x, y); await page.mouse.down();
-  if (wander) { await page.waitForTimeout(ms / 2); await page.mouse.move(x + wander, y + wander / 2, { steps: 5 }); await page.waitForTimeout(ms / 2); }
-  else await page.waitForTimeout(ms);
-  await page.mouse.up(); await page.waitForTimeout(150);
-}
+// Use an isolated browser context so daily task setup cannot affect Home and the feature suites below.
+async function navigationChecks() {
+  const navContext = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
+  const nav = await navContext.newPage();
+  nav.on('pageerror', e => errors.push(e.message));
+  const url = new URL(BASE);
+  url.searchParams.set('venture-test', '1');
+  await nav.goto(url.href, { waitUntil: 'networkidle' });
+  await nav.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem('garden.test.reply', 'fail');
+    localStorage.setItem('garden.test.ventureSeconds', '0.4');
+  });
+  await nav.reload({ waitUntil: 'networkidle' });
+  const colors = () => nav.evaluate(() => Object.fromEntries(['reflect', 'venture'].map(id => {
+    const tab = document.querySelector(`.tab[data-pane="${id}"]`);
+    const iconStyle = getComputedStyle(tab.querySelector(':scope > svg'));
+    return [id, {
+      iconColor: iconStyle.color,
+      iconStroke: iconStyle.stroke,
+      labelColor: getComputedStyle(tab.querySelector('.label')).color,
+      done: tab.classList.contains('done'),
+      mark: getComputedStyle(tab.querySelector('.mark')).visibility,
+    }];
+  })));
+  const MONO = 'rgb(93, 105, 101)', BLUE = 'rgb(47, 111, 176)', RED = 'rgb(200, 69, 60)';
+  const matches = (state, color, done) => state.iconColor === color && state.iconStroke === color
+    && state.labelColor === color && state.done === done && state.mark === (done ? 'visible' : 'hidden');
 
-await page.goto(BASE, { waitUntil: 'networkidle' });
-await page.evaluate(() => localStorage.clear());
-await page.reload({ waitUntil: 'networkidle' });
-await page.waitForTimeout(500);
+  let state = await colors();
+  check('Reflect initially has a gray computed icon SVG color/stroke and label', matches(state.reflect, MONO, false), JSON.stringify(state.reflect));
+  check('Venture initially has a gray computed icon SVG color/stroke and label', matches(state.venture, MONO, false), JSON.stringify(state.venture));
 
-check('opens on Home', await visiblePane() === 'home' && await text('[data-pane="home"] h1') === 'Home');
-check('Home text before watering', (await text('[data-pane="home"] .sub')).startsWith('Hold on your plant to tip the can.')
-  && await text('.water') === 'Hold to water');
-check('no completion sprout before watering', !(await homeDone()));
-
-for (const p of ['winddown', 'reflect', 'venture', 'toolkit', 'home']) {
-  await page.click(`.tab[data-pane="${p}"]`); await page.waitForTimeout(450);
-  const vis = await visiblePane();
-  const cur = await page.getAttribute(`.tab[data-pane="${p}"]`, 'aria-current');
-  let extra = '';
-  if (p === 'winddown') {
-    const bg = await page.evaluate(() => getComputedStyle(document.querySelector('.bar')).backgroundColor);
-    check('Wind down turns the bar dark', bg === 'rgb(14, 17, 20)', bg);
+  for (const p of ['winddown', 'reflect', 'venture', 'toolkit', 'home']) {
+    await nav.click(`.tab[data-pane="${p}"]`); await nav.waitForTimeout(450);
+    const vis = await nav.evaluate(() => [...document.querySelectorAll('.pane')]
+      .find(pane => Math.abs(pane.getBoundingClientRect().left) < 2)?.dataset.pane);
+    const cur = await nav.getAttribute(`.tab[data-pane="${p}"]`, 'aria-current');
+    if (p === 'winddown') {
+      const bg = await nav.evaluate(() => getComputedStyle(document.querySelector('.bar')).backgroundColor);
+      check('Wind down turns the bar dark', bg === 'rgb(14, 17, 20)', bg);
+    }
+    check(`bar button slides to ${p}`, vis === p && cur === 'page', `visible=${vis}`);
   }
-  check(`bar button slides to ${p}`, vis === p && cur === 'page', `visible=${vis}`);
+  const bgLight = await nav.evaluate(() => getComputedStyle(document.querySelector('.bar')).backgroundColor);
+  check('bar light again off Wind down', bgLight === 'rgb(255, 255, 255)', bgLight);
+
+  // Navigation is explicit: horizontal flicks over the viewport never change the pane.
+  {
+    const views = await nav.evaluate(() => JSON.parse(localStorage.getItem('garden.log') || '[]').filter(e => e.type === 'pane_view').length);
+    const y = 400;
+    await nav.mouse.move(320, y); await nav.mouse.down(); await nav.mouse.move(120, y, { steps: 4 }); await nav.mouse.up();
+    await nav.waitForTimeout(450);
+    const left = await nav.evaluate(() => [...document.querySelectorAll('.pane')].find(pane => Math.abs(pane.getBoundingClientRect().left) < 2)?.dataset.pane);
+    await nav.mouse.move(80, y); await nav.mouse.down(); await nav.mouse.move(280, y, { steps: 4 }); await nav.mouse.up();
+    await nav.waitForTimeout(450);
+    const right = await nav.evaluate(() => [...document.querySelectorAll('.pane')].find(pane => Math.abs(pane.getBoundingClientRect().left) < 2)?.dataset.pane);
+    const after = await nav.evaluate(() => JSON.parse(localStorage.getItem('garden.log') || '[]').filter(e => e.type === 'pane_view').length);
+    check('horizontal flicks do not navigate or log pane views', left === 'home' && right === 'home' && after === views,
+      `left=${left}, right=${right}`);
+  }
+
+  await nav.click('.tab[data-pane="reflect"]'); await nav.waitForTimeout(400);
+  await nav.click('.rf-item[data-id="seed-2"] .rf-strip'); await nav.waitForTimeout(250);
+  await nav.click('.rf-item[data-id="seed-2"] .rf-turn'); await nav.waitForTimeout(550);
+  await nav.click('.rf-item[data-id="seed-2"] .rf-plan'); await nav.waitForTimeout(400);
+  const linkDestination = await nav.evaluate(() => ({
+    pane: [...document.querySelectorAll('.pane')].find(pane => Math.abs(pane.getBoundingClientRect().left) < 2)?.dataset.pane,
+    expanded: document.querySelector('.toolkit-option[data-option="safety-plan"]').getAttribute('aria-expanded'),
+  }));
+  check('Reflect to Toolkit plan link navigation still works', linkDestination.pane === 'toolkit' && linkDestination.expanded === 'true', JSON.stringify(linkDestination));
+
+  await nav.click('.tab[data-pane="venture"]'); await nav.waitForTimeout(400);
+  await nav.click('.venture-choice[data-plant="banana"]');
+  // Venture v4: only the first choice starts one real 2 s practice before the daily round.
+  const practiceStart = nav.locator('.venture-practice-start');
+  if (await practiceStart.isVisible()) {
+    const practiceStartsDisabled = await practiceStart.isDisabled();
+    await nav.click('.venture-stage');
+    await nav.waitForFunction(() => garden.venture.practiceStatus === 'result'
+      && !document.querySelector('.venture-practice-start').disabled, null, { timeout: 4000 });
+    check('Venture first-run pointer practice enables Start before the daily round',
+      practiceStartsDisabled && await practiceStart.isEnabled());
+    await practiceStart.click();
+  }
+  await nav.waitForFunction(() => document.querySelector('.tab[data-pane="venture"]').classList.contains('done'), null, { timeout: 3000 });
+  state = await colors();
+  check('Venture completion alone turns its icon SVG and label red; Reflect stays gray',
+    matches(state.venture, RED, true) && matches(state.reflect, MONO, false), JSON.stringify(state));
+
+  await nav.click('.tab[data-pane="reflect"]'); await nav.waitForTimeout(400);
+  const cardsBefore = await nav.locator('.rf-item').count();
+  await nav.fill('.rf-text', 'Navigation colour check.');
+  await nav.click('.rf-mood[data-mood="2"][aria-label="Add card with mood: Okay"]');
+  await nav.waitForFunction(() => document.querySelector('.tab[data-pane="reflect"]').classList.contains('done'));
+  state = await colors();
+  const cardsAfter = await nav.locator('.rf-item').count();
+  check('Reflect Okay face creates one card and turns its icon SVG and label blue while Venture stays red',
+    cardsAfter === cardsBefore + 1 && matches(state.reflect, BLUE, true) && matches(state.venture, RED, true),
+    JSON.stringify({ ...state, cardsBefore, cardsAfter }));
+
+  await nav.reload({ waitUntil: 'networkidle' }); await nav.waitForTimeout(300);
+  state = await colors();
+  check('completed Reflect/Venture icon and label colors survive reload',
+    matches(state.reflect, BLUE, true) && matches(state.venture, RED, true), JSON.stringify(state));
+
+  await nav.click('.tab[data-pane="toolkit"]'); await nav.waitForTimeout(400);
+  await nav.click('.toolkit-option[data-option="skip-day"]');
+  await nav.waitForFunction(() => ['reflect', 'venture'].every(id => !document.querySelector(`.tab[data-pane="${id}"]`).classList.contains('done')));
+  state = await colors();
+  check('day reset returns both icon SVG color/strokes and labels to gray with hidden marks',
+    matches(state.reflect, MONO, false) && matches(state.venture, MONO, false), JSON.stringify(state));
+  await navContext.close();
 }
-const bgLight = await page.evaluate(() => getComputedStyle(document.querySelector('.bar')).backgroundColor);
-check('bar light again off Wind down', bgLight === 'rgb(255, 255, 255)', bgLight);
 
-// swipe: a quick horizontal flick moves one pane
-{
-  const y = 400; await page.mouse.move(320, y); await page.mouse.down(); await page.mouse.move(120, y, { steps: 4 }); await page.mouse.up();
-  await page.waitForTimeout(450); const v = await visiblePane();
-  check('flick left goes to Venture', v === 'venture', `visible=${v}`);
-  await page.click('.tab[data-pane="home"]'); await page.waitForTimeout(450);
+await navigationChecks();
+if (NAV_ONLY) {
+  await browser.close();
+  const failed = results.filter(r => !r).length;
+  console.log(`\n${results.length - failed}/${results.length} checks passed`);
+  process.exit(failed ? 1 : 0);
 }
 
-// early release changes nothing
-await holdOnPlant(300);
-check('early release (300 ms): no watered event, texts unchanged', await count('watered') === 0 && await text('.water') === 'Hold to water' && !(await homeDone()));
-
-// a hold that wanders a little still counts
-await holdOnPlant(800, 30);
-check('hold 800 ms that wanders 34 px waters', await count('watered') === 1, `watered events=${await count('watered')}`);
-check('after: "Watered today." and the pill', await text('[data-pane="home"] .sub') === 'Watered today.' && await text('.water') === 'Watered today');
-check('completion sprout on Home', await homeDone());
-check('aria-label states the plant', (await page.getAttribute('.water', 'aria-label')).includes('Watered today'));
-
-await holdOnPlant(700);
-check('second hold the same day adds no watered event', await count('watered') === 1 && await count('water_again') >= 1);
-
-await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(400);
-check('reload keeps the state', await text('.water') === 'Watered today' && await homeDone());
-
-// yesterday -> waterable again
-await page.evaluate(() => { const d = new Date(Date.now() - 864e5); const p = n => String(n).padStart(2, '0');
-  localStorage.setItem('garden.state', JSON.stringify({ v: 1, wateredOn: `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}` })); });
-await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(400);
-check('stored date yesterday -> waterable again', await text('.water') === 'Hold to water' && !(await homeDone()));
-
-// keyboard: Enter on the button waters
-await page.focus('.water'); await page.keyboard.press('Enter'); await page.waitForTimeout(200);
-check('Enter on the button waters', await count('watered') === 2 && await text('.water') === 'Watered today');
-check('log is append-only and ordered', (await events()).every((e, i, a) => typeof e.t === 'number' && typeof e.type === 'string' && (i === 0 || a[i - 1].t <= e.t)));
+await homeChecks({ page, check, BASE });
 
 // contrast of every visible text against what is behind it (gradient stops / composited pill, worst case)
 const contrast = await page.evaluate(async () => {
@@ -146,7 +201,11 @@ const dur = await page.evaluate(() => getComputedStyle(document.querySelector('.
 check('reduced motion: panes switch without a slide', dur === '0s', `transition=${dur}`);
 await page.emulateMedia({ reducedMotion: 'no-preference' });
 
+await winddownChecks({ page, check, BASE });
+await toolkitChecks({ page, check });
+await ventureChecks({ page, check });
 await reflectChecks({ page, context, check, BASE });
+await toolkitResetChecks({ page, check });
 
 check('no console errors', errors.length === 0, errors.slice(0, 3).join(' | '));
 check('no request leaves the origin', foreign.length === 0, foreign.slice(0, 3).join(' '));
